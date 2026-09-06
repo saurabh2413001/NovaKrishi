@@ -1,0 +1,23 @@
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+build/
+coverage/
+.idea/
+.vscode/
+
+# Secrets / environment files
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# Android / local signing files
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/*.jks
+android/app/*.keystore

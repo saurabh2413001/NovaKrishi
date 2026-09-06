@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "786093457045",
+    "project_id": "novakrishi",
+    "storage_bucket": "novakrishi.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:786093457045:android:b97a7e1f3fedda9eaf259c",
+        "android_client_info": {
+          "package_name": "com.example.novakrishi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAk3SH68mkIjlfahUL17mcrORp5u56c-pQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

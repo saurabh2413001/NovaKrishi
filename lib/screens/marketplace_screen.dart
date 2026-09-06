@@ -1,0 +1,268 @@
+import 'package:flutter/material.dart';
+import '../services/localization.dart';
+import '../theme/app_theme.dart';
+import '../widgets/common_widgets.dart';
+import '../models/models.dart';
+import '../services/api_service.dart';
+import '../services/app_state.dart';
+
+class MarketplaceScreen extends StatefulWidget {
+  MarketplaceScreen({super.key});
+
+  @override
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  static const _categoryKeys = ['All Items', 'Vegetables', 'Fruits', 'Grains'];
+  String _selectedCategory = 'All Items';
+  final _searchCtrl = TextEditingController();
+  final _api = ApiService();
+  List<Produce> _apiProduce = [];
+  bool _loading = true;
+
+  static final List<Produce> _allProduce = [
+    Produce(
+      name: AppStrings.t('Fresh Farm Tomatoes', 'खेत के ताज़ा टमाटर'),
+      category: AppStrings.t('Vegetables', 'सब्ज़ियाँ'),
+      farmName: AppStrings.t('Green Valley FPO', 'ग्रीन वैली FPO'),
+      location: AppStrings.t('Nashik, Maharashtra', 'नासिक, महाराष्ट्र'),
+      distanceKm: 4.5,
+      price: 32,
+      unit: '/kg',
+      availableQty: 4500,
+      availableUnit: 'kg',
+      rating: 4.6,
+    ),
+    Produce(
+      name: AppStrings.t('Organic Potatoes (Desi)', 'ऑर्गेनिक देसी आलू'),
+      category: AppStrings.t('Vegetables', 'सब्ज़ियाँ'),
+      farmName: AppStrings.t('Devbhumi FPO', 'देवभूमि FPO'),
+      location: 'Gorakhpur, UP',
+      distanceKm: 8.0,
+      price: 24,
+      unit: '/kg',
+      availableQty: 8000,
+      availableUnit: 'kg',
+      rating: 4.4,
+      organic: true,
+    ),
+    Produce(
+      name: AppStrings.t('Premium Sharbati Wheat', 'प्रीमियम शरबती गेहूँ'),
+      category: AppStrings.t('Grains', 'अनाज'),
+      farmName: AppStrings.t('Malwa FPO', 'मालवा FPO'),
+      location: 'Ujjain, Madhya Pradesh',
+      distanceKm: 3.0,
+      price: 2450,
+      unit: '/Quintal',
+      availableQty: 120,
+      availableUnit: AppStrings.t('Quintal', 'क्विंटल'),
+      rating: 4.8,
+    ),
+    Produce(
+      name: AppStrings.t('Fresh Red Onions', 'ताज़े लाल प्याज़'),
+      category: AppStrings.t('Vegetables', 'सब्ज़ियाँ'),
+      farmName: 'Solapur Agro FPO',
+      location: 'Solapur, Maharashtra',
+      distanceKm: 4.2,
+      price: 28,
+      unit: '/kg',
+      availableQty: 6200,
+      availableUnit: 'kg',
+      rating: 4.5,
+    ),
+    Produce(
+      name: AppStrings.t('Organic Alphonso Mangoes', 'ऑर्गेनिक अल्फ़ांसो आम'),
+      category: AppStrings.t('Fruits', 'फल'),
+      farmName: AppStrings.t('Ratnagiri Agro Farms', 'रत्नागिरी एग्रो फार्म्स'),
+      location: AppStrings.t('Ratnagiri, Maharashtra', 'रत्नागिरी, महाराष्ट्र'),
+      distanceKm: 5.6,
+      price: 120,
+      unit: '/dozen',
+      availableQty: 1800,
+      availableUnit: 'dozen',
+      rating: 4.9,
+      organic: true,
+    ),
+  ];
+
+  String _categoryLabel(String key) {
+    switch (key) {
+      case 'Vegetables': return AppStrings.t('Vegetables', 'सब्ज़ियाँ');
+      case 'Fruits': return AppStrings.t('Fruits', 'फल');
+      case 'Grains': return AppStrings.t('Grains', 'अनाज');
+      default: return AppStrings.t('All Items', 'सभी वस्तुएँ');
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    appState.addListener(_onLanguageChanged);
+    _loadProducts();
+  }
+
+  @override
+  void dispose() {
+    appState.removeListener(_onLanguageChanged);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onLanguageChanged() => setState(() {});
+
+  Future<void> _loadProducts() async {
+    try {
+      final rows = await _api.getProducts(search: _searchCtrl.text.trim(), limit: 30);
+      final mapped = rows.map((p) {
+        final location = p['location'] is Map ? Map<String, dynamic>.from(p['location']) : <String, dynamic>{};
+        return Produce(
+          id: p['id']?.toString(),
+          name: '${p['title'] ?? 'Farm Produce'}',
+          category: '${p['category'] ?? 'Produce'}',
+          farmName: '${p['fpoName'] ?? p['farmerName'] ?? 'Verified Farm'}',
+          location: '${location['district'] ?? ''}, ${location['state'] ?? ''}',
+          distanceKm: 0,
+          price: (p['price'] as num?)?.toDouble() ?? 0,
+          unit: '/${p['unit'] ?? 'kg'}',
+          availableQty: (p['availableQuantity'] as num?)?.round() ?? 0,
+          availableUnit: '${p['unit'] ?? 'kg'}',
+          rating: (p['rating'] as num?)?.toDouble() ?? 4.5,
+          verified: p['isVerifiedFPO'] == true,
+          organic: p['isOrganicCertified'] == true,
+          imageUrl: p['imageUrl']?.toString(),
+        );
+      }).toList();
+      if (mounted) setState(() { _apiProduce = mapped; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _addToCart(Produce p) async {
+    if (p.id == null || p.id!.isEmpty) {
+      _snack(context, AppStrings.t('Demo item: sign in and use a live listing to add it to cart.', 'डेमो आइटम है। कार्ट में जोड़ने के लिए साइन इन करके लाइव लिस्टिंग चुनें।'));
+      return;
+    }
+    try {
+      await _api.addToCart(productId: p.id!, quantity: 1);
+      if (mounted) _snack(context, AppStrings.t('${p.name} added to cart', '${p.name} कार्ट में जोड़ दिया गया'));
+    } on ApiException catch (e) {
+      if (mounted) _snack(context, e.message);
+    }
+  }
+
+  Future<void> _buyNow(Produce p) async {
+    await _addToCart(p);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final source = _apiProduce.isNotEmpty ? _apiProduce : _allProduce;
+    final query = _searchCtrl.text.trim().toLowerCase();
+    final results = (_selectedCategory == 'All Items' ? source : source.where((p) => p.category == _selectedCategory || (appState.isHindi && _categoryLabel(_selectedCategory) == p.category)).toList())
+        .where((p) => query.isEmpty || '${p.name} ${p.farmName} ${p.location}'.toLowerCase().contains(query))
+        .toList();
+    return Column(
+      children: [
+        Container(
+          color: AppColors.surface,
+          padding: EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: BrandWordmark(subtitle: AppStrings.t('DIRECT MARKETPLACE', 'सीधा बाज़ार'))),
+                  IconButton(onPressed: () => appState.setLanguage(appState.isHindi ? AppLanguage.english : AppLanguage.hindi), icon: Icon(Icons.translate, size: 20)),
+                  IconButton(onPressed: () => _snack(context, AppStrings.t('Notifications are available from Home.', 'सूचनाएँ होम स्क्रीन पर उपलब्ध हैं।')), icon: Icon(Icons.notifications_none, size: 22)),
+                ],
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: _searchCtrl,
+                decoration: InputDecoration(
+                  hintText: AppStrings.t('Search fresh produce, mandi, farmer...', 'ताज़ी उपज, मंडी, किसान खोजें...'),
+                  prefixIcon: Icon(Icons.search, size: 20),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              SizedBox(height: 10),
+              SizedBox(
+                height: 34,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categoryKeys.length,
+                  separatorBuilder: (_, __) => SizedBox(width: 8),
+                  itemBuilder: (context, i) {
+                    final key = _categoryKeys[i];
+                    final cat = _categoryLabel(key);
+                    final selected = key == _selectedCategory;
+                    return ChoiceChip(
+                      label: Text(cat),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _selectedCategory = key),
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, 24),
+            children: [
+              EyebrowLabel(text: AppStrings.t('Direct Marketplace', 'सीधा बाज़ार')),
+              SizedBox(height: 6),
+              Text(AppStrings.t('Fresh From the Farm', 'खेत से सीधे ताज़ा'), style: Theme.of(context).textTheme.displaySmall),
+              SizedBox(height: 6),
+              Text(
+                AppStrings.t('Buy directly from verified farmers and FPOs with zero middleman commissions.', 'सत्यापित किसानों और FPO से सीधे खरीदें, बिना बिचौलिया कमीशन के।'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    AppStrings.t('Showing ${results.length} Verified Batches', '${results.length} सत्यापित बैच दिखाए जा रहे हैं'),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => showModalBottomSheet(context: context, builder: (_) => SafeArea(child: Wrap(children: [ListTile(leading: Icon(Icons.sort), title: Text(AppStrings.t('Sort by price', 'मूल्य के अनुसार क्रम')), onTap: () { Navigator.pop(context); setState(() => _apiProduce.sort((a,b) => a.price.compareTo(b.price))); }), ListTile(leading: Icon(Icons.refresh), title: Text(AppStrings.t('Refresh live listings', 'लाइव लिस्टिंग रीफ्रेश करें')), onTap: () { Navigator.pop(context); _loadProducts(); })]))),
+                    icon: Icon(Icons.tune, size: 16),
+                    label: Text(AppStrings.t('Sort & Filter', 'क्रम और फ़िल्टर')),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              for (final p in results)
+                ProduceCard(
+                  produce: p,
+                  onAddToCart: () => _addToCart(p),
+                  onBuyNow: () => _buyNow(p),
+                ),
+              if (results.isEmpty)
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Center(child: Text(AppStrings.t('No produce in this category yet.', 'इस श्रेणी में अभी कोई उपज नहीं है।'))),
+                ),
+              Center(
+                child: OutlinedButton(onPressed: _loadProducts, child: Text(AppStrings.t('View All Produce', 'सभी उपज देखें'))),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _snack(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+  }
+}

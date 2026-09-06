@@ -1,0 +1,28 @@
+name: novakrishi
+description: "NovaKrishi — Direct Agricultural Marketplace mobile app (Farm to Market, Without the Middlemen)."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  # Used by the new "Scan Crop" screen to take/pick a crop photo.
+  image_picker: ^1.2.3
+  http: ^1.2.2
+  google_sign_in: ^7.2.0
+  shared_preferences: ^2.5.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/novakrishi_logo.png
