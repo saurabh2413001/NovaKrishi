@@ -1,153 +1,405 @@
 import '../models/models.dart';
 import '../services/app_state.dart';
-import '../screens/customer_screen.dart';
-import '../screens/delivery_partner_screen.dart';
-import '../screens/buyer_offer_screen.dart';
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
-import '../services/app_state.dart';
 import '../services/localization.dart';
+
 import '../screens/home_screen.dart';
 import '../screens/marketplace_screen.dart';
 import '../screens/prices_screen.dart';
 import '../screens/ai_insights_screen.dart';
 import '../screens/profile_screen.dart';
 
-/// Responsive app shell. Swipe left/right between tabs, or tap the bottom bar.
+import '../screens/customer_screen.dart';
+import '../screens/buyer_offer_screen.dart';
+import '../screens/delivery_partner_screen.dart';
+
+
 class AppShell extends StatefulWidget {
   final int initialIndex;
-  AppShell({super.key, this.initialIndex = 0});
+
+  const AppShell({
+    super.key,
+    this.initialIndex = 0,
+  });
+
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
-  late int _index = widget.initialIndex;
-  late final PageController _controller = PageController(initialPage: widget.initialIndex);
 
-  final _pages = [HomeScreen(), MarketplaceScreen(), PricesScreen(), AiInsightsScreen(), ProfileScreen()];
-  final _destinations = [
-    (icon: Icons.home_outlined, activeIcon: Icons.home, en: AppStrings.t('Home', 'होम'), hi: 'होम'),
-    (icon: Icons.storefront_outlined, activeIcon: Icons.storefront, en: AppStrings.t('Market', 'बाज़ार'), hi: 'बाज़ार'),
-    (icon: Icons.show_chart_outlined, activeIcon: Icons.show_chart, en: AppStrings.t('Prices', 'भाव'), hi: 'भाव'),
-    (icon: Icons.auto_awesome_outlined, activeIcon: Icons.auto_awesome, en: AppStrings.t('AI Insights', 'AI जानकारी'), hi: 'AI जानकारी'),
-    (icon: Icons.person_outline, activeIcon: Icons.person, en: AppStrings.t('Profile', 'प्रोफ़ाइल'), hi: 'प्रोफ़ाइल'),
-  ];
+class _AppShellState extends State<AppShell> {
+
+  late int _index;
+  late PageController _controller;
+
 
   @override
   void initState() {
     super.initState();
-    appState.addListener(_onLanguageChanged);
+
+    _index = widget.initialIndex;
+    _controller = PageController(
+      initialPage: _index,
+    );
+
+    appState.addListener(_refresh);
   }
 
-  void _onLanguageChanged() => setState(() {});
+
+  void _refresh(){
+    setState(() {});
+  }
+
 
   @override
-  void dispose() {
-    appState.removeListener(_onLanguageChanged);
+  void dispose(){
+
+    appState.removeListener(_refresh);
+
     _controller.dispose();
+
     super.dispose();
   }
 
-  void _goTo(int index) {
-    setState(() => _index = index);
-    _controller.animateToPage(index, duration: Duration(milliseconds: 260), curve: Curves.easeOutCubic);
+
+
+  void _goTo(int index){
+
+    setState(() {
+      _index = index;
+    });
+
+
+    _controller.animateToPage(
+      index,
+      duration: const Duration(milliseconds:250),
+      curve: Curves.easeOut,
+    );
   }
+
+
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
+
+
     final role = appState.role;
-    debugPrint("CURRENT ROLE = $role");
-    if (role == KrishiRole.customer) {
-      return const CustomerScreen();
+
+
+
+    /*
+      Role based pages
+    */
+
+
+    List<Widget> pages = [];
+    List<Map<String,dynamic>> tabs=[];
+
+
+
+    if(role == KrishiRole.deliveryPartner){
+
+      pages=[
+        const DeliveryPartnerScreen(),
+        const ProfileScreen(),
+      ];
+
+
+      tabs=[
+        {
+          "icon":Icons.local_shipping_outlined,
+          "active":Icons.local_shipping,
+          "title":AppStrings.t(
+              "Delivery",
+              "डिलीवरी"
+          )
+        },
+
+        {
+          "icon":Icons.person_outline,
+          "active":Icons.person,
+          "title":AppStrings.t(
+              "Profile",
+              "प्रोफ़ाइल"
+          )
+        },
+
+      ];
+
     }
 
-    if (role == KrishiRole.bulkBuyer) {
-      return const BuyerOfferScreen();
+
+    else if(role == KrishiRole.bulkBuyer){
+
+
+      pages=[
+
+        const BuyerOfferScreen(),
+        const ProfileScreen(),
+
+      ];
+
+
+      tabs=[
+
+        {
+          "icon":Icons.shopping_cart_outlined,
+          "active":Icons.shopping_cart,
+          "title":AppStrings.t(
+              "Offers",
+              "ऑफर"
+          )
+        },
+
+
+        {
+          "icon":Icons.person_outline,
+          "active":Icons.person,
+          "title":AppStrings.t(
+              "Profile",
+              "प्रोफ़ाइल"
+          )
+        },
+
+      ];
+
     }
 
-    if (role == KrishiRole.deliveryPartner) {
-      return const DeliveryPartnerScreen();
-    }
-    // Responsive navbar: bottom tab bar on phones, a side NavigationRail on
-    // tablets / foldables / desktop-width windows (>= 700 logical px), where
-    // a bottom bar would stretch tab labels awkwardly across the full width.
-    final isWide = MediaQuery.sizeOf(context).width >= 700;
 
-    final body = SafeArea(
-      bottom: !isWide,
-      child: PageView.builder(
-        controller: _controller,
-        itemCount: _pages.length,
-        onPageChanged: (i) => setState(() => _index = i),
-        itemBuilder: (context, i) => _pages[i],
-      ),
-    );
+    else{
 
-    if (isWide) {
-      return Scaffold(
-        body: Row(
-          children: [
-            SafeArea(
-              child: NavigationRail(
-                selectedIndex: _index,
-                onDestinationSelected: _goTo,
-                labelType: NavigationRailLabelType.all,
-                backgroundColor: AppColors.surface,
-                destinations: [
-                  for (final d in _destinations)
-                    NavigationRailDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.activeIcon),
-                      label: Text(AppStrings.t(d.en, d.hi)),
-                    ),
-                ],
-              ),
-            ),
-            VerticalDivider(width: 1, color: AppColors.border),
-            Expanded(child: body),
-          ],
-        ),
-      );
+
+      pages=[
+
+        HomeScreen(),
+        MarketplaceScreen(),
+        PricesScreen(),
+        AiInsightsScreen(),
+        const ProfileScreen(),
+
+      ];
+
+
+
+      tabs=[
+
+        {
+          "icon":Icons.home_outlined,
+          "active":Icons.home,
+          "title":AppStrings.t(
+              "Home",
+              "होम"
+          )
+        },
+
+
+        {
+          "icon":Icons.storefront_outlined,
+          "active":Icons.storefront,
+          "title":AppStrings.t(
+              "Market",
+              "बाज़ार"
+          )
+        },
+
+
+        {
+          "icon":Icons.show_chart_outlined,
+          "active":Icons.show_chart,
+          "title":AppStrings.t(
+              "Prices",
+              "भाव"
+          )
+        },
+
+
+        {
+          "icon":Icons.auto_awesome_outlined,
+          "active":Icons.auto_awesome,
+          "title":AppStrings.t(
+              "AI",
+              "AI"
+          )
+        },
+
+
+        {
+          "icon":Icons.person_outline,
+          "active":Icons.person,
+          "title":AppStrings.t(
+              "Profile",
+              "प्रोफ़ाइल"
+          )
+        },
+
+
+      ];
+
+
     }
+
+
+
 
     return Scaffold(
-      body: body,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
-        child: SafeArea(
-          top: false,
-          child: SizedBox(
-            height: 66,
-            child: LayoutBuilder(builder: (context, constraints) {
-              final compact = constraints.maxWidth < 390;
-              return Row(children: List.generate(_destinations.length, (i) {
-                final d = _destinations[i];
-                final active = i == _index;
-                final color = active ? AppColors.primaryDark : AppColors.textMuted;
-                return Expanded(
-                  child: Semantics(
-                    button: true,
-                    selected: active,
-                    label: AppStrings.t(d.en, d.hi),
-                    child: InkWell(
-                      onTap: () => _goTo(i),
-                      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(active ? d.activeIcon : d.icon, color: color, size: compact ? 20 : 22),
-                        SizedBox(height: 3),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 2),
-                          child: Text(AppStrings.t(d.en, d.hi), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: compact ? 9 : 10, fontWeight: active ? FontWeight.w700 : FontWeight.w500, color: color)),
-                        ),
-                      ]),
-                    ),
-                  ),
-                );
-              }));
-            }),
-          ),
+
+      body: SafeArea(
+
+        child: PageView.builder(
+
+          controller:_controller,
+
+          itemCount: pages.length,
+
+
+          onPageChanged:(i){
+
+            setState(() {
+              _index=i;
+            });
+
+          },
+
+
+          itemBuilder:(context,i){
+
+            return pages[i];
+
+          },
+
         ),
+
       ),
+
+
+
+      bottomNavigationBar: Container(
+
+        decoration:BoxDecoration(
+
+          color:AppColors.surface,
+
+          border:Border(
+
+            top:BorderSide(
+              color:AppColors.border,
+            ),
+
+          ),
+
+        ),
+
+
+        child:SafeArea(
+
+          child:SizedBox(
+
+            height:65,
+
+
+            child:Row(
+
+              children:List.generate(
+
+                tabs.length,
+
+
+                    (i){
+
+                  final active =
+                      i==_index;
+
+
+
+                  return Expanded(
+
+                    child:InkWell(
+
+                      onTap:(){
+
+                        _goTo(i);
+
+                      },
+
+
+                      child:Column(
+
+                        mainAxisAlignment:
+                        MainAxisAlignment.center,
+
+
+                        children:[
+
+
+                          Icon(
+
+                            active
+                                ? tabs[i]["active"]
+                                : tabs[i]["icon"],
+
+                            color:active
+                                ? AppColors.primaryDark
+                                : AppColors.textMuted,
+
+                          ),
+
+
+                          const SizedBox(
+                              height:3
+                          ),
+
+
+                          Text(
+
+                            tabs[i]["title"],
+
+                            style:TextStyle(
+
+                              fontSize:10,
+
+                              fontWeight:active
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+
+
+                              color:active
+                                  ? AppColors.primaryDark
+                                  : AppColors.textMuted,
+
+                            ),
+
+                          )
+
+
+                        ],
+
+
+                      ),
+
+                    ),
+
+                  );
+
+
+                },
+
+
+              ),
+
+            ),
+
+
+          ),
+
+        ),
+
+      ),
+
+
     );
+
   }
+
 }
