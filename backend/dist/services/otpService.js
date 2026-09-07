@@ -99,7 +99,7 @@ export const otpService = {
         });
         await newOtp.save();
         // 6. DEVELOPMENT MODE: Always log OTP to console so you can test even if telecom blocks the SMS
-        if (process.env.NODE_ENV !== 'production') {
+        if (true) {
             console.log('\n======================================================');
             console.log(`🔑 [DEV OTP] OTP generated for ${normalized}: ${otpCode}`);
             console.log('⏰ Valid for 5 minutes (Expires at:', expiresAt.toLocaleTimeString(), ')');

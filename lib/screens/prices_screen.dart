@@ -16,6 +16,8 @@ class _PricesScreenState extends State<PricesScreen> {
   final _api = ApiService();
   List<MandiPrice> _livePrices = [];
   bool _loading = true;
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
 
   static final List<MandiPrice> _fallbackPrices = [
     MandiPrice(
@@ -78,7 +80,14 @@ class _PricesScreenState extends State<PricesScreen> {
   ];
 
   @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
+
     super.initState();
     _loadRates();
   }
@@ -102,7 +111,15 @@ class _PricesScreenState extends State<PricesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final prices = _livePrices.isNotEmpty ? _livePrices : _fallbackPrices;
+    final allPrices = _livePrices.isNotEmpty ? _livePrices : _fallbackPrices;
+
+    final prices = allPrices.where((p) {
+      final q = _searchQuery.toLowerCase();
+      return q.isEmpty ||
+          p.cropName.toLowerCase().contains(q) ||
+          p.mandiName.toLowerCase().contains(q);
+    }).toList();
+
     return Column(
       children: [
         TopStrip(text: AppStrings.t('Direct Trade • 100% Escrow Protected • Zero Middlemen', 'सीधा व्यापार • 100% एस्क्रो सुरक्षा • कोई बिचौलिया नहीं')),
@@ -119,6 +136,12 @@ class _PricesScreenState extends State<PricesScreen> {
               ),
               SizedBox(height: 10),
               TextField(
+                controller: _searchCtrl,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.trim();
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: AppStrings.t('Search crop or mandi... e.g. Azadpur', 'फसल या मंडी खोजें... जैसे आज़ादपुर'),
                   prefixIcon: Icon(Icons.search, size: 20),

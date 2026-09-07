@@ -15,6 +15,7 @@ dependencies:
   http: ^1.2.2
   google_sign_in: ^7.2.0
   shared_preferences: ^2.5.5
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -26,3 +27,9 @@ flutter:
 
   assets:
     - assets/images/novakrishi_logo.png
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon.png"

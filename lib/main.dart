@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
-import 'widgets/app_shell.dart';
+import 'screens/auth/sign_in_screen.dart';
 import 'services/app_state.dart';
 
 void main() {
@@ -33,7 +33,7 @@ class NovaKrishiApp extends StatelessWidget {
           child: child!,
         );
       },
-        home: AppShell(),
+        home: SignInScreen(),
       ),
     );
   }

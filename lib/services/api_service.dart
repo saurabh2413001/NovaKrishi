@@ -15,7 +15,7 @@ class ApiService {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.79.181.215:5000/api',
+    defaultValue: 'https://novakrishi-8ayt.onrender.com/api',
   );
 
   static String? _token;

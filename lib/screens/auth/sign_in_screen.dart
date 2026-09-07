@@ -9,6 +9,7 @@ import 'google_sign_in_screen.dart';
 import '../../widgets/app_shell.dart';
 import '../../services/api_service.dart';
 import '../../services/app_state.dart';
+import '../../models/models.dart';
 
 enum _SignInMode { mobileOtp, password }
 
@@ -26,6 +27,7 @@ class _SignInScreenState extends State<SignInScreen> {
   final _passwordCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   final _api = ApiService();
+  KrishiRole _selectedRole = KrishiRole.farmer;
 
   @override
   void dispose() {
@@ -53,6 +55,52 @@ class _SignInScreenState extends State<SignInScreen> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             SizedBox(height: 20),
+
+            FieldLabel(
+              AppStrings.t(
+                'Select Account Type',
+                'खाता प्रकार चुनें'
+              ),
+            ),
+
+            RoleOptionCard(
+              icon: Icons.agriculture_outlined,
+              role: KrishiRole.farmer,
+              selected: _selectedRole == KrishiRole.farmer,
+              onTap: () => setState(() {
+                _selectedRole = KrishiRole.farmer;
+              }),
+            ),
+
+            RoleOptionCard(
+              icon: Icons.shopping_cart_outlined,
+              role: KrishiRole.customer,
+              selected: _selectedRole == KrishiRole.customer,
+              onTap: () => setState(() {
+                _selectedRole = KrishiRole.customer;
+              }),
+            ),
+
+            RoleOptionCard(
+              icon: Icons.storefront_outlined,
+              role: KrishiRole.bulkBuyer,
+              selected: _selectedRole == KrishiRole.bulkBuyer,
+              onTap: () => setState(() {
+                _selectedRole = KrishiRole.bulkBuyer;
+              }),
+            ),
+
+            RoleOptionCard(
+              icon: Icons.delivery_dining_outlined,
+              role: KrishiRole.deliveryPartner,
+              selected: _selectedRole == KrishiRole.deliveryPartner,
+              onTap: () => setState(() {
+                _selectedRole = KrishiRole.deliveryPartner;
+              }),
+            ),
+
+            SizedBox(height: 12),
+
             _ModeToggle(
               mode: _mode,
               onChanged: (m) => setState(() => _mode = m),
@@ -186,7 +234,10 @@ class _SignInScreenState extends State<SignInScreen> {
                     await _api.sendOtp(mobile);
                     if (!mounted) return;
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => OtpVerificationScreen(mobileNumber: mobile),
+                      builder: (_) => OtpVerificationScreen(
+                        mobileNumber: mobile,
+                        role: _selectedRole,
+                      ),
                     ));
                   } on ApiException catch (e) {
                     if (!mounted) return;
@@ -250,8 +301,15 @@ class _SignInScreenState extends State<SignInScreen> {
               ),
             ),
             SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => GoogleSignInScreen())),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => GoogleSignInScreen(
+                      role: _selectedRole,
+                    ),
+                  ),
+                ),
+
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

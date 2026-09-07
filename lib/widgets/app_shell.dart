@@ -1,3 +1,8 @@
+import '../models/models.dart';
+import '../services/app_state.dart';
+import '../screens/customer_screen.dart';
+import '../screens/delivery_partner_screen.dart';
+import '../screens/buyer_offer_screen.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../services/app_state.dart';
@@ -51,6 +56,19 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final role = appState.role;
+    debugPrint("CURRENT ROLE = $role");
+    if (role == KrishiRole.customer) {
+      return const CustomerScreen();
+    }
+
+    if (role == KrishiRole.bulkBuyer) {
+      return const BuyerOfferScreen();
+    }
+
+    if (role == KrishiRole.deliveryPartner) {
+      return const DeliveryPartnerScreen();
+    }
     // Responsive navbar: bottom tab bar on phones, a side NavigationRail on
     // tablets / foldables / desktop-width windows (>= 700 logical px), where
     // a bottom bar would stretch tab labels awkwardly across the full width.

@@ -75,19 +75,19 @@ class DispatchStep {
 }
 
 /// The four account types offered during onboarding.
-enum KrishiRole { farmer, consumer, bulkBuyer, coldChainPartner }
+enum KrishiRole { farmer, customer, bulkBuyer, deliveryPartner }
 
 extension KrishiRoleX on KrishiRole {
   String get title {
     switch (this) {
       case KrishiRole.farmer:
         return 'Farmer / FPO';
-      case KrishiRole.consumer:
-        return 'Consumer';
+      case KrishiRole.customer:
+        return 'Customer';
       case KrishiRole.bulkBuyer:
         return 'Bulk Buyer / Trader';
-      case KrishiRole.coldChainPartner:
-        return 'Cold-Chain Partner';
+      case KrishiRole.deliveryPartner:
+        return 'Delivery Partner';
     }
   }
 
@@ -95,12 +95,12 @@ extension KrishiRoleX on KrishiRole {
     switch (this) {
       case KrishiRole.farmer:
         return 'Zero Commission';
-      case KrishiRole.consumer:
-        return 'Fresh Farm Produce';
+      case KrishiRole.customer:
+        return 'Fresh Farm Shopping';
       case KrishiRole.bulkBuyer:
         return 'Mandi Verified';
-      case KrishiRole.coldChainPartner:
-        return 'Route Optimized';
+      case KrishiRole.deliveryPartner:
+        return 'Smart Delivery Routes';
     }
   }
 
@@ -109,13 +109,13 @@ extension KrishiRoleX on KrishiRole {
       case KrishiRole.farmer:
         return 'Sell crops directly at live mandi benchmark prices with '
             'direct bank payout.';
-      case KrishiRole.consumer:
+      case KrishiRole.customer:
         return 'Buy verified farm-fresh vegetables and fruits delivered '
             'straight to your doorstep.';
       case KrishiRole.bulkBuyer:
         return 'Source truckload agricultural lots with verified quality '
             'test reports.';
-      case KrishiRole.coldChainPartner:
+      case KrishiRole.deliveryPartner:
         return 'Deliver fresh consignments with AI route optimization and '
             'instant payouts.';
     }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/localization.dart';
 import '../theme/app_theme.dart';
@@ -152,6 +153,47 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     }
   }
 
+
+  Timer? _searchTimer;
+
+  Future<void> _searchProducts(String value) async {
+    _searchTimer?.cancel();
+
+    _searchTimer = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final rows = await _api.getProducts(
+          search: value.trim(),
+          limit: 30,
+        );
+
+        if (mounted) {
+          setState(() {
+            _apiProduce = rows.map((e) {
+  return Produce(
+    id: e['id']?.toString(),
+    name: e['title']?.toString() ?? '',
+    category: e['category']?.toString() ?? '',
+    farmName: e['farmerName']?.toString() ?? '',
+    location: e['location']?['district']?.toString() ?? '',
+    distanceKm: 0,
+    price: double.tryParse(e['price'].toString()) ?? 0,
+    unit: e['unit']?.toString() ?? 'kg',
+    availableQty: int.tryParse(e['availableQuantity'].toString()) ?? 0,
+    availableUnit: e['unit']?.toString() ?? 'kg',
+    rating: double.tryParse(e['rating'].toString()) ?? 0,
+    verified: e['isVerifiedFPO'] ?? false,
+    organic: e['isOrganicCertified'] ?? false,
+    imageUrl: e['imageUrl']?.toString(),
+  );
+}).toList();
+          });
+        }
+      } catch (e) {
+        debugPrint("Search error: $e");
+      }
+    });
+  }
+
   Future<void> _buyNow(Produce p) async {
     await _addToCart(p);
   }
@@ -184,7 +226,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   hintText: AppStrings.t('Search fresh produce, mandi, farmer...', 'ताज़ी उपज, मंडी, किसान खोजें...'),
                   prefixIcon: Icon(Icons.search, size: 20),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (value) { setState(() {}); _searchProducts(value); },
               ),
               SizedBox(height: 10),
               SizedBox(

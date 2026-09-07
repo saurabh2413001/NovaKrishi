@@ -6,6 +6,9 @@ import '../../models/models.dart';
 import '../../widgets/app_shell.dart';
 import 'sign_in_screen.dart';
 import 'farmer_registration_screen.dart';
+import '../buyer_offer_screen.dart';
+import '../customer_screen.dart';
+import '../delivery_partner_screen.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   RoleSelectionScreen({super.key});
@@ -63,9 +66,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ),
             RoleOptionCard(
               icon: Icons.shopping_bag_outlined,
-              role: KrishiRole.consumer,
-              selected: _selected == KrishiRole.consumer,
-              onTap: () => setState(() => _selected = KrishiRole.consumer),
+              role: KrishiRole.customer,
+              selected: _selected == KrishiRole.customer,
+              onTap: () => setState(() => _selected = KrishiRole.customer),
             ),
             RoleOptionCard(
               icon: Icons.storefront_outlined,
@@ -75,9 +78,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             ),
             RoleOptionCard(
               icon: Icons.local_shipping_outlined,
-              role: KrishiRole.coldChainPartner,
-              selected: _selected == KrishiRole.coldChainPartner,
-              onTap: () => setState(() => _selected = KrishiRole.coldChainPartner),
+              role: KrishiRole.deliveryPartner,
+              selected: _selected == KrishiRole.deliveryPartner,
+              onTap: () => setState(() => _selected = KrishiRole.deliveryPartner),
             ),
             SizedBox(height: 6),
             Container(
@@ -133,16 +136,51 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             SizedBox(height: 6),
             ElevatedButton(
               onPressed: () {
-                if (_selected == KrishiRole.farmer) {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => FarmerRegistrationScreen()),
-                  );
-                } else {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => AppShell()),
-                    (route) => false,
-                  );
-                }
+              if (_selected == KrishiRole.farmer) {
+
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => FarmerRegistrationScreen(),
+    ),
+  );
+
+} else if (_selected == KrishiRole.bulkBuyer) {
+
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => const BuyerOfferScreen(),
+    ),
+    (route) => false,
+  );
+
+} else if (_selected == KrishiRole.customer) {
+
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => const CustomerScreen(),
+    ),
+    (route) => false,
+  );
+
+} else if (_selected == KrishiRole.deliveryPartner) {
+
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => const DeliveryPartnerScreen(),
+    ),
+    (route) => false,
+  );
+
+} else {
+
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(
+      builder: (_) => AppShell(),
+    ),
+    (route) => false,
+  );
+
+}
               },
               child: LayoutBuilder(
                 builder: (context, constraints) {
