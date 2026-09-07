@@ -17,7 +17,7 @@ class ResponsiveBody extends StatelessWidget {
 /// mint tile, next to the AppStrings.t("NovaKrishi", "NovaKrishi") wordmark.
 class BrandMark extends StatelessWidget {
   final double size;
-  BrandMark({super.key, this.size = 34});
+  const BrandMark({super.key, this.size = 34});
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +43,7 @@ class BrandMark extends StatelessWidget {
 class BrandWordmark extends StatelessWidget {
   final String subtitle;
   final VoidCallback? onTap;
-  BrandWordmark({
+  const BrandWordmark({
     super.key,
     this.subtitle = 'FARM TO MARKET DIRECT',
     this.onTap,

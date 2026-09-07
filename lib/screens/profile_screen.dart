@@ -155,12 +155,16 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _signedInCard(BuildContext context) {
-    final u = appState.user!;
+    final u = appState.user ?? {};
+
     final name =
-        (u['name'] ?? u['displayName'] ?? 'NovaKrishi User').toString();
-    final email = (u['email'] ?? '').toString();
+    (u['name'] ?? u['displayName'] ?? 'NovaKrishi User').toString();
+
+    final email =
+    (u['email'] ?? '').toString();
+
     final photo =
-        (u['profileImage'] ?? u['photoUrl'] ?? '').toString();
+    (u['profileImage'] ?? u['photoUrl'] ?? '').toString();
 
     return _ProfileCard(
       name: name,
