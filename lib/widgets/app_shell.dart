@@ -10,6 +10,7 @@ import '../screens/marketplace_screen.dart';
 import '../screens/prices_screen.dart';
 import '../screens/ai_insights_screen.dart';
 import '../screens/profile_screen.dart';
+import '../screens/farmer_buyer_offers_screen.dart';
 
 import '../screens/customer_screen.dart';
 import '../screens/buyer_offer_screen.dart';
@@ -176,6 +177,7 @@ class _AppShellState extends State<AppShell> {
         HomeScreen(),
         MarketplaceScreen(),
         PricesScreen(),
+        const FarmerBuyerOffersScreen(),
         AiInsightsScreen(),
         const ProfileScreen(),
 
@@ -211,6 +213,16 @@ class _AppShellState extends State<AppShell> {
           "title":AppStrings.t(
               "Prices",
               "भाव"
+          )
+        },
+
+
+        {
+          "icon":Icons.local_offer_outlined,
+          "active":Icons.local_offer,
+          "title":AppStrings.t(
+              "Buyer Offers",
+              "खरीदार ऑफर"
           )
         },
 

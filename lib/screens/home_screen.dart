@@ -7,6 +7,7 @@ import '../services/app_state.dart';
 import '../services/localization.dart';
 import 'marketplace_screen.dart';
 import 'auth/sign_in_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -159,9 +160,12 @@ class _HomeScreenState extends State<HomeScreen> {
         TopStrip(text: AppStrings.t('Direct Trade • 100% Escrow Protected • Zero Middlemen', 'सीधा व्यापार • 100% एस्क्रो सुरक्षा • कोई बिचौलिया नहीं')),
         _HomeAppBar(onLanguage: _toggleLanguage, onNotifications: _showNotifications, serverOnline: _serverOnline),
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
-            children: [
+          child: RefreshIndicator(
+            onRefresh: _loadHomeData,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
               EyebrowLabel(text: AppStrings.t('Smart Agriculture Marketplace', 'स्मार्ट कृषि बाज़ार')),
               SizedBox(height: 10),
               RichText(
@@ -199,13 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: 10),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => SignInScreen()),
-                ),
-                child: Text(AppStrings.t('Join as Farmer', 'किसान के रूप में जुड़ें')),
-              ),
-              SizedBox(height: 22),
+              SizedBox(height: 6),
               _PriceInsightCard(),
               SizedBox(height: 16),
               _SecureBanner(),
@@ -253,6 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               for (final p in (_liveProduce.isNotEmpty ? _liveProduce : _previewProduce)) ProduceCard(produce: p),
             ],
+          ),
           ),
         ),
       ],
@@ -312,13 +311,25 @@ class _HomeAppBar extends StatelessWidget {
           PopupMenuButton<String>(
             tooltip: AppStrings.t('More', 'अधिक'),
             onSelected: (value) {
-              if (value == 'refresh') {
-                final state = context.findAncestorStateOfType<_HomeScreenState>();
-                state?._loadHomeData();
+              if (value == 'settings') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => SettingsScreen(),
+                  ),
+                );
               }
             },
             itemBuilder: (_) => [
-              PopupMenuItem(value: 'refresh', child: Text(AppStrings.t('Refresh data', 'डेटा रीफ्रेश करें'))),
+              PopupMenuItem(
+                value: 'settings',
+                child: Row(
+                  children: [
+                    const Icon(Icons.settings_outlined, size: 20),
+                    const SizedBox(width: 10),
+                    Text(AppStrings.t('Settings', 'सेटिंग्स')),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
