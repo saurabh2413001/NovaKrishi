@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import 'checkout_screen.dart';
 import '../services/localization.dart';
 import '../theme/app_theme.dart';
 
@@ -163,13 +164,29 @@ class _CartScreenState extends State<CartScreen> {
       );
   }
 
-  void _proceedToCheckout() {
-    _showMessage(
-      _text(
-        'Checkout will be connected next.',
-        'चेकआउट अगले चरण में जोड़ा जाएगा।',
+  Future<void> _proceedToCheckout() async {
+    if (_items.isEmpty) {
+      _showMessage(
+        _text(
+          'Your cart is empty.',
+          'आपकी कार्ट खाली है।',
+        ),
+      );
+      return;
+    }
+
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => CheckoutScreen(
+          items: List<Map<String, dynamic>>.from(_items),
+          subtotal: _subtotal,
+        ),
       ),
     );
+
+    if (result == true && mounted) {
+      await _loadCart();
+    }
   }
 
   @override

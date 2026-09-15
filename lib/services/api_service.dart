@@ -628,6 +628,94 @@ class ApiService {
   }
 
   // ------------------------------------------------------------
+  // PAYMENTS
+  // ------------------------------------------------------------
+
+  Future<Map<String, dynamic>> createPayment({
+    required String orderId,
+  }) async {
+    if (orderId.trim().isEmpty) {
+      throw const ApiException('Invalid order ID.', 400);
+    }
+
+    final data = await _request(
+      'POST',
+      'payments/create',
+      authRequired: true,
+      body: {
+        'orderId': orderId.trim(),
+      },
+    );
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw const ApiException(
+      'Invalid payment response from server.',
+      0,
+    );
+  }
+
+  Future<Map<String, dynamic>> verifyPayment({
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    if (razorpayOrderId.trim().isEmpty ||
+        razorpayPaymentId.trim().isEmpty ||
+        razorpaySignature.trim().isEmpty) {
+      throw const ApiException(
+        'Payment verification details are incomplete.',
+        400,
+      );
+    }
+
+    final data = await _request(
+      'POST',
+      'payments/verify',
+      authRequired: true,
+      body: {
+        'razorpay_order_id': razorpayOrderId.trim(),
+        'razorpay_payment_id': razorpayPaymentId.trim(),
+        'razorpay_signature': razorpaySignature.trim(),
+      },
+    );
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw const ApiException(
+      'Invalid payment verification response from server.',
+      0,
+    );
+  }
+
+  Future<Map<String, dynamic>> getPayment(
+    String orderId,
+  ) async {
+    if (orderId.trim().isEmpty) {
+      throw const ApiException('Invalid order ID.', 400);
+    }
+
+    final data = await _request(
+      'GET',
+      'payments/${orderId.trim()}',
+      authRequired: true,
+    );
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw const ApiException(
+      'Invalid payment details response from server.',
+      0,
+    );
+  }
+
+  // ------------------------------------------------------------
   // ORDER TRACKING
   // ------------------------------------------------------------
 
