@@ -177,6 +177,80 @@ class ApiService {
   }
 
   // ------------------------------------------------------------
+  // REGISTRATION
+  // ------------------------------------------------------------
+
+  Future<Map<String, dynamic>> register({
+    required String name,
+    required String emailOrPhone,
+    required String password,
+    required String role,
+    String? email,
+    String? phone,
+    String? state,
+    String? district,
+    String? village,
+    String? primaryCrop,
+  }) async {
+    final contact = emailOrPhone.trim();
+    final pass = password;
+
+    if (name.trim().isEmpty) {
+      throw const ApiException('Enter your full name.', 400);
+    }
+
+    if (contact.isEmpty) {
+      throw const ApiException(
+        'Enter your email or mobile number.',
+        400,
+      );
+    }
+
+    if (pass.length < 8) {
+      throw const ApiException(
+        'Password must be at least 8 characters.',
+        400,
+      );
+    }
+
+    final data = await _request(
+      'POST',
+      'auth/register',
+      body: {
+        'name': name.trim(),
+        'emailOrPhone': contact,
+        if (email != null && email.trim().isNotEmpty)
+          'email': email.trim(),
+        if (phone != null && phone.trim().isNotEmpty)
+          'phone': phone.trim(),
+        'password': pass,
+        'role': role,
+        if (state != null && state.trim().isNotEmpty)
+          'state': state.trim(),
+        if (district != null && district.trim().isNotEmpty)
+          'district': district.trim(),
+        if (village != null && village.trim().isNotEmpty)
+          'village': village.trim(),
+        if (primaryCrop != null && primaryCrop.trim().isNotEmpty)
+          'primaryCrop': primaryCrop.trim(),
+      },
+    );
+
+    if (data is! Map ||
+        data['success'] != true ||
+        data['token'] == null) {
+      throw const ApiException(
+        'Registration failed. Please try again.',
+        400,
+      );
+    }
+
+    setToken(data['token']?.toString());
+
+    return Map<String, dynamic>.from(data);
+  }
+
+  // ------------------------------------------------------------
   // HEALTH
   // ------------------------------------------------------------
 
@@ -195,6 +269,52 @@ class ApiService {
 
       return false;
     }
+  }
+
+  // ------------------------------------------------------------
+  // PASSWORD LOGIN
+  // ------------------------------------------------------------
+
+  Future<Map<String, dynamic>> login(
+    String emailOrPhone,
+    String password,
+  ) async {
+    final contact = emailOrPhone.trim();
+    final pass = password;
+
+    if (contact.isEmpty) {
+      throw const ApiException(
+        'Enter your email or mobile number.',
+        400,
+      );
+    }
+
+    if (pass.isEmpty) {
+      throw const ApiException(
+        'Enter your password.',
+        400,
+      );
+    }
+
+    final data = await _request(
+      'POST',
+      'auth/login',
+      body: {
+        'emailOrPhone': contact,
+        'password': pass,
+      },
+    );
+
+    if (data is! Map || data['success'] != true || data['token'] == null) {
+      throw const ApiException(
+        'Login failed. Please check your credentials.',
+        401,
+      );
+    }
+
+    setToken(data['token']?.toString());
+
+    return Map<String, dynamic>.from(data);
   }
 
   // ------------------------------------------------------------

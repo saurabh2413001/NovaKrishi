@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../services/localization.dart';
+import '../../services/api_service.dart';
+import '../../services/app_state.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_theme.dart';
+import '../../models/models.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/app_shell.dart';
 import 'sign_in_screen.dart';
@@ -14,14 +17,20 @@ class FarmerRegistrationScreen extends StatefulWidget {
 }
 
 class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
-  final _nameCtrl = TextEditingController(text: AppStrings.t('Ramesh Kumar', 'रमेश कुमार'));
-  final _mobileCtrl = TextEditingController(text: '98452 31920');
-  final _villageCtrl = TextEditingController(text: AppStrings.t('Dindori', 'दिंडोरी'));
-  final _pincodeCtrl = TextEditingController(text: '422202');
-  final _fpoCtrl = TextEditingController(text: AppStrings.t('Sahyadri Farmers Producer Co.', 'सह्याद्री किसान उत्पादक कंपनी'));
+  final _nameCtrl = TextEditingController();
+  final _mobileCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmPasswordCtrl = TextEditingController();
+  final _villageCtrl = TextEditingController();
+  final _pincodeCtrl = TextEditingController();
+  final _fpoCtrl = TextEditingController();
 
-  String? _state = AppStrings.t('Maharashtra', 'महाराष्ट्र');
-  String? _district = AppStrings.t('Nashik', 'नासिक');
+  final _api = ApiService();
+  bool _isCreatingAccount = false;
+
+  String? _state;
+  String? _district;
   String _farmSize = '2-5 Acres';
   bool _fpoMember = true;
   bool _agreedToTerms = false;
@@ -35,10 +44,149 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
   void dispose() {
     _nameCtrl.dispose();
     _mobileCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmPasswordCtrl.dispose();
     _villageCtrl.dispose();
     _pincodeCtrl.dispose();
     _fpoCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _createAccount() async {
+    if (_isCreatingAccount) return;
+
+    final name = _nameCtrl.text.trim();
+    final mobile = _mobileCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+    final confirmPassword = _confirmPasswordCtrl.text;
+    final pincode = _pincodeCtrl.text.trim();
+
+    if (name.isEmpty) {
+      _showMessage(AppStrings.t('Enter your full name.', 'अपना पूरा नाम दर्ज करें।'));
+      return;
+    }
+
+    if (!RegExp(r'^\\d{10}$').hasMatch(mobile)) {
+      _showMessage(AppStrings.t(
+        'Mobile number must be exactly 10 digits.',
+        'मोबाइल नंबर ठीक 10 अंकों का होना चाहिए।',
+      ));
+      return;
+    }
+
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email)) {
+      _showMessage(AppStrings.t(
+        'Enter a valid email address.',
+        'सही ईमेल पता दर्ज करें।',
+      ));
+      return;
+    }
+
+    if (password.length < 8) {
+      _showMessage(AppStrings.t(
+        'Password must be at least 8 characters.',
+        'पासवर्ड कम से कम 8 अक्षरों का होना चाहिए।',
+      ));
+      return;
+    }
+
+    if (!RegExp(r'[A-Z]').hasMatch(password) ||
+        !RegExp(r'[a-z]').hasMatch(password) ||
+        !RegExp(r'\\d').hasMatch(password)) {
+      _showMessage(AppStrings.t(
+        'Password must contain uppercase, lowercase and a number.',
+        'पासवर्ड में बड़े अक्षर, छोटे अक्षर और एक संख्या होनी चाहिए।',
+      ));
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showMessage(AppStrings.t(
+        'Passwords do not match.',
+        'दोनों पासवर्ड समान नहीं हैं।',
+      ));
+      return;
+    }
+
+    if (_state == null || _district == null) {
+      _showMessage(AppStrings.t(
+        'Please select your state and district.',
+        'कृपया अपना राज्य और जिला चुनें।',
+      ));
+      return;
+    }
+
+    if (!RegExp(r'^\\d{6}$').hasMatch(pincode)) {
+      _showMessage(AppStrings.t(
+        'Pincode must be exactly 6 digits.',
+        'पिनकोड ठीक 6 अंकों का होना चाहिए।',
+      ));
+      return;
+    }
+
+    if (!_agreedToTerms) {
+      _showMessage(AppStrings.t(
+        'Please accept the terms and conditions.',
+        'कृपया नियम और शर्तें स्वीकार करें।',
+      ));
+      return;
+    }
+
+    setState(() => _isCreatingAccount = true);
+
+    try {
+      final data = await _api.register(
+        name: name,
+        emailOrPhone: mobile,
+        password: password,
+        role: 'farmer',
+        email: email.isEmpty ? null : email,
+        phone: mobile,
+        state: _state,
+        district: _district,
+        village: _villageCtrl.text.trim(),
+        primaryCrop: _crops.isNotEmpty ? _crops.first : null,
+      );
+
+      if (!mounted) return;
+
+      final userData = data['user'];
+      if (userData is Map) {
+        await appState.setUser(
+          Map<String, dynamic>.from(userData),
+          role: KrishiRole.farmer,
+        );
+      }
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AppShell()),
+        (route) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showMessage(e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _showMessage(AppStrings.t(
+        'Unable to reach NovaKrishi server.',
+        'NovaKrishi सर्वर से कनेक्ट नहीं हो सका।',
+      ));
+    } finally {
+      if (mounted) {
+        setState(() => _isCreatingAccount = false);
+      }
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   void _addCrop() async {
@@ -110,6 +258,34 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                 ),
                 prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
                 suffixIcon: Icon(Icons.verified, color: AppColors.success, size: 18),
+              ),
+            ),
+            FieldLabel(AppStrings.t('Email Address (Optional)', 'ईमेल पता (वैकल्पिक)')),
+            TextField(
+              controller: _emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.email_outlined, size: 20),
+              ),
+            ),
+            FieldLabel(AppStrings.t('Password', 'पासवर्ड')),
+            TextField(
+              controller: _passwordCtrl,
+              obscureText: true,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.lock_outline, size: 20),
+                hintText: AppStrings.t(
+                  'Minimum 8 characters',
+                  'कम से कम 8 अक्षर',
+                ),
+              ),
+            ),
+            FieldLabel(AppStrings.t('Confirm Password', 'पासवर्ड की पुष्टि करें')),
+            TextField(
+              controller: _confirmPasswordCtrl,
+              obscureText: true,
+              decoration: InputDecoration(
+                prefixIcon: Icon(Icons.lock_reset_outlined, size: 20),
               ),
             ),
             SizedBox(height: 6),
@@ -299,18 +475,26 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
             ),
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: !_agreedToTerms || _nameCtrl.text.trim().isEmpty || !RegExp(r'^\d{10}$').hasMatch(_mobileCtrl.text.replaceAll(' ', '')) || !RegExp(r'^\d{6}$').hasMatch(_pincodeCtrl.text.trim())
-                  ? null
-                  : () => Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => AppShell()),
-                        (route) => false,
-                      ),
+              onPressed: _isCreatingAccount ? null : _createAccount,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(AppStrings.t('Create Farmer Account', 'किसान खाता बनाएँ')),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, size: 18),
+                  if (_isCreatingAccount) ...[
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(AppStrings.t('Creating Account...', 'खाता बनाया जा रहा है...')),
+                  ] else ...[
+                    Text(AppStrings.t('Create Farmer Account', 'किसान खाता बनाएँ')),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward, size: 18),
+                  ],
                 ],
               ),
             ),
