@@ -6,8 +6,8 @@ import '../services/api_service.dart';
 import '../services/app_state.dart';
 import '../services/localization.dart';
 import 'marketplace_screen.dart';
-import 'auth/sign_in_screen.dart';
 import 'settings_screen.dart';
+import 'my_store_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
@@ -158,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         TopStrip(text: AppStrings.t('Direct Trade • 100% Escrow Protected • Zero Middlemen', 'सीधा व्यापार • 100% एस्क्रो सुरक्षा • कोई बिचौलिया नहीं')),
-        _HomeAppBar(onLanguage: _toggleLanguage, onNotifications: _showNotifications, serverOnline: _serverOnline),
+        _HomeAppBar(onLanguage: _toggleLanguage, onNotifications: _showNotifications, serverOnline: _serverOnline, isFarmer: appState.role == KrishiRole.farmer),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _loadHomeData,
@@ -263,11 +263,13 @@ class _HomeAppBar extends StatelessWidget {
   final VoidCallback onLanguage;
   final VoidCallback onNotifications;
   final bool serverOnline;
+  final bool isFarmer;
 
   _HomeAppBar({
     required this.onLanguage,
     required this.onNotifications,
     required this.serverOnline,
+    required this.isFarmer,
   });
 
   @override
@@ -296,6 +298,19 @@ class _HomeAppBar extends StatelessWidget {
               ),
             ),
           ),
+          if (isFarmer)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const MyStoreScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.storefront_outlined, size: 21),
+              tooltip: AppStrings.t('My Store', 'मेरी दुकान'),
+            ),
           IconButton(
             visualDensity: VisualDensity.compact,
             onPressed: onLanguage,

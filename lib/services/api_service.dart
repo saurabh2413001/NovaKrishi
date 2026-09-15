@@ -387,6 +387,31 @@ class ApiService {
         .toList();
   }
 
+
+  Future<List<Map<String, dynamic>>> getMyProducts() async {
+    final data = await _request(
+      'GET',
+      'products/my-products',
+      authRequired: true,
+    );
+
+    final list =
+        data is Map
+            ? data['products']
+            : data;
+
+    if (list is! List) {
+      return [];
+    }
+
+    return list
+        .whereType<Map>()
+        .map(
+          (e) => Map<String, dynamic>.from(e),
+        )
+        .toList();
+  }
+
   // ------------------------------------------------------------
   // MARKET RATES
   // ------------------------------------------------------------
