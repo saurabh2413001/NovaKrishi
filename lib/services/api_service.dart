@@ -565,6 +565,35 @@ class ApiService {
     );
   }
 
+  Future<Map<String, dynamic>> updateCartQuantity({
+    required String productId,
+    required int quantity,
+  }) async {
+    if (productId.trim().isEmpty) {
+      throw Exception('Invalid product ID');
+    }
+
+    if (quantity < 1) {
+      throw Exception('Quantity must be at least 1');
+    }
+
+    final data = await _request(
+      'PUT',
+      'cart',
+      authRequired: true,
+      body: {
+        'productId': productId,
+        'quantity': quantity,
+      },
+    );
+
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+
+    throw Exception('Invalid cart update response');
+  }
+
   Future<void> removeFromCart(
     String productId,
   ) async {
