@@ -59,9 +59,8 @@ class _FarmerBuyerOffersScreenState extends State<FarmerBuyerOffersScreen> {
   String _formatPrice(dynamic value) {
     if (value == null) return _text('Price not specified', 'कीमत उपलब्ध नहीं');
 
-    final number = value is num
-        ? value.toDouble()
-        : double.tryParse(value.toString());
+    final number =
+        value is num ? value.toDouble() : double.tryParse(value.toString());
 
     if (number == null) {
       return _string(value);
@@ -228,15 +227,7 @@ class _FarmerBuyerOffersScreenState extends State<FarmerBuyerOffersScreen> {
     );
   }
 
-
   Future<void> _showOfferForm(Map<String, dynamic> request) async {
-    final quantityController = TextEditingController();
-    final priceController = TextEditingController();
-    final notesController = TextEditingController();
-
-    bool logisticsIncluded = false;
-    bool submitting = false;
-
     final requestId = _string(request['id'], '');
     final crop = _string(
       request['productTitle'],
@@ -247,289 +238,50 @@ class _FarmerBuyerOffersScreenState extends State<FarmerBuyerOffersScreen> {
       'Q',
     );
 
-    await showModalBottomSheet<void>(
+    if (requestId.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _text(
+              'Buyer request ID is missing.',
+              'खरीदार अनुरोध ID उपलब्ध नहीं है।',
+            ),
+          ),
+        ),
+      );
+      return;
+    }
+
+    final submitted = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            Future<void> submit() async {
-              if (submitting) return;
-
-              final quantityText = quantityController.text.trim();
-              final priceText = priceController.text.trim();
-
-              final quantity = double.tryParse(quantityText);
-              final price = double.tryParse(priceText);
-
-              if (quantity == null || quantity <= 0) {
-                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _text(
-                        'Enter a valid quantity.',
-                        'सही मात्रा दर्ज करें।',
-                      ),
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              if (price == null || price <= 0) {
-                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _text(
-                        'Enter a valid offer price.',
-                        'सही ऑफर भाव दर्ज करें।',
-                      ),
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              if (requestId.isEmpty) {
-                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _text(
-                        'Buyer request ID is missing.',
-                        'खरीदार अनुरोध ID उपलब्ध नहीं है।',
-                      ),
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              setSheetState(() {
-                submitting = true;
-              });
-
-              try {
-                await _api.createFarmerOffer(
-                  requestId: requestId,
-                  offeredQuantity: quantity,
-                  offeredPricePerUnit: price,
-                  logisticsIncluded: logisticsIncluded,
-                  notes: notesController.text.trim(),
-                );
-
-                if (!mounted) return;
-
-                Navigator.pop(sheetContext);
-
-                await _loadRequests();
-
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(this.context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _text(
-                        'Your offer was submitted successfully.',
-                        'आपका ऑफर सफलतापूर्वक भेज दिया गया।',
-                      ),
-                    ),
-                  ),
-                );
-              } catch (e) {
-                if (!mounted) return;
-
-                setSheetState(() {
-                  submitting = false;
-                });
-
-                ScaffoldMessenger.of(sheetContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _text(
-                        'Could not submit offer. Please try again.',
-                        'ऑफर भेजा नहीं जा सका। कृपया फिर प्रयास करें।',
-                      ),
-                    ),
-                  ),
-                );
-              }
-            }
-
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 16,
-                  right: 16,
-                  top: 8,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                ),
-                child: Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Container(
-                            width: 42,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade400,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-
-                        Text(
-                          _text(
-                            'Make an Offer',
-                            'ऑफर दें',
-                          ),
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          crop,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        TextField(
-                          controller: quantityController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: _text(
-                              'Your quantity',
-                              'आपकी मात्रा',
-                            ),
-                            hintText: 'e.g. 100',
-                            suffixText: unit,
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        TextField(
-                          controller: priceController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: _text(
-                              'Your offer price',
-                              'आपका ऑफर भाव',
-                            ),
-                            hintText: 'e.g. 2400',
-                            prefixText: '₹ ',
-                            suffixText: '/$unit',
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: logisticsIncluded,
-                          onChanged: submitting
-                              ? null
-                              : (value) {
-                                  setSheetState(() {
-                                    logisticsIncluded = value;
-                                  });
-                                },
-                          title: Text(
-                            _text(
-                              'Logistics included',
-                              'डिलीवरी/लॉजिस्टिक्स शामिल',
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        TextField(
-                          controller: notesController,
-                          maxLines: 3,
-                          textCapitalization: TextCapitalization.sentences,
-                          decoration: InputDecoration(
-                            labelText: _text(
-                              'Notes (optional)',
-                              'नोट्स (वैकल्पिक)',
-                            ),
-                            hintText: _text(
-                              'Add any terms or details',
-                              'कोई अतिरिक्त शर्त या जानकारी लिखें',
-                            ),
-                            border: const OutlineInputBorder(),
-                          ),
-                        ),
-
-                        const SizedBox(height: 18),
-
-                        SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: submitting ? null : submit,
-                            icon: submitting
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.send_outlined),
-                            label: Text(
-                              submitting
-                                  ? _text(
-                                      'Submitting...',
-                                      'भेजा जा रहा है...',
-                                    )
-                                  : _text(
-                                      'Submit Offer',
-                                      'ऑफर भेजें',
-                                    ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
+      builder: (_) => _FarmerOfferFormSheet(
+        api: _api,
+        requestId: requestId,
+        crop: crop,
+        unit: unit,
+        englishText: (english, hindi) => _text(english, hindi),
+      ),
     );
 
-    quantityController.dispose();
-    priceController.dispose();
-    notesController.dispose();
+    if (!mounted || submitted != true) return;
+
+    await _loadRequests();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _text(
+            'Your offer was submitted successfully.',
+            'आपका ऑफर सफलतापूर्वक भेज दिया गया।',
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildCard(Map<String, dynamic> request) {
@@ -578,10 +330,9 @@ class _FarmerBuyerOffersScreenState extends State<FarmerBuyerOffersScreen> {
                       crop,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -878,6 +629,278 @@ class _DetailRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FarmerOfferFormSheet extends StatefulWidget {
+  const _FarmerOfferFormSheet({
+    required this.api,
+    required this.requestId,
+    required this.crop,
+    required this.unit,
+    required this.englishText,
+  });
+
+  final ApiService api;
+  final String requestId;
+  final String crop;
+  final String unit;
+  final String Function(String english, String hindi) englishText;
+
+  @override
+  State<_FarmerOfferFormSheet> createState() => _FarmerOfferFormSheetState();
+}
+
+class _FarmerOfferFormSheetState extends State<_FarmerOfferFormSheet> {
+  late final TextEditingController _quantityController;
+  late final TextEditingController _priceController;
+  late final TextEditingController _notesController;
+
+  bool _logisticsIncluded = false;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _quantityController = TextEditingController();
+    _priceController = TextEditingController();
+    _notesController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _quantityController.dispose();
+    _priceController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_submitting) return;
+
+    final quantity = double.tryParse(
+      _quantityController.text.trim(),
+    );
+    final price = double.tryParse(
+      _priceController.text.trim(),
+    );
+
+    if (quantity == null || quantity <= 0) {
+      _showMessage(
+        widget.englishText(
+          'Enter a valid quantity.',
+          'सही मात्रा दर्ज करें।',
+        ),
+      );
+      return;
+    }
+
+    if (price == null || price <= 0) {
+      _showMessage(
+        widget.englishText(
+          'Enter a valid offer price.',
+          'सही ऑफर भाव दर्ज करें।',
+        ),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _submitting = true;
+    });
+
+    try {
+      await widget.api.createFarmerOffer(
+        requestId: widget.requestId,
+        offeredQuantity: quantity,
+        offeredPricePerUnit: price,
+        logisticsIncluded: _logisticsIncluded,
+        notes: _notesController.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        _submitting = false;
+      });
+
+      _showMessage(
+        widget.englishText(
+          'Could not submit offer. Please try again.',
+          'ऑफर भेजा नहीं जा सका। कृपया फिर प्रयास करें।',
+        ),
+      );
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 8,
+          bottom: MediaQuery.viewInsetsOf(context).bottom + 16,
+        ),
+        child: Material(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(24),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  widget.englishText(
+                    'Make an Offer',
+                    'ऑफर दें',
+                  ),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.crop,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                TextField(
+                  controller: _quantityController,
+                  enabled: !_submitting,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: widget.englishText(
+                      'Your quantity',
+                      'आपकी मात्रा',
+                    ),
+                    hintText: 'e.g. 100',
+                    suffixText: widget.unit,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _priceController,
+                  enabled: !_submitting,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: widget.englishText(
+                      'Your offer price',
+                      'आपका ऑफर भाव',
+                    ),
+                    hintText: 'e.g. 24',
+                    prefixText: '₹ ',
+                    suffixText: '/${widget.unit}',
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _logisticsIncluded,
+                  onChanged: _submitting
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _logisticsIncluded = value;
+                          });
+                        },
+                  title: Text(
+                    widget.englishText(
+                      'Logistics included',
+                      'डिलीवरी/लॉजिस्टिक्स शामिल',
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: _notesController,
+                  enabled: !_submitting,
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    labelText: widget.englishText(
+                      'Notes (optional)',
+                      'नोट्स (वैकल्पिक)',
+                    ),
+                    hintText: widget.englishText(
+                      'Add any terms or details',
+                      'कोई अतिरिक्त शर्त या जानकारी लिखें',
+                    ),
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _submitting ? null : _submit,
+                    icon: _submitting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Icon(Icons.send_outlined),
+                    label: Text(
+                      _submitting
+                          ? widget.englishText(
+                              'Submitting...',
+                              'भेजा जा रहा है...',
+                            )
+                          : widget.englishText(
+                              'Submit Offer',
+                              'ऑफर भेजें',
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

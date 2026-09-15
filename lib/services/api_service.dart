@@ -26,14 +26,13 @@ class ApiService {
   static String? get token => _token;
 
   Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    if (_token != null) 'Authorization': 'Bearer $_token',
-  };
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        if (_token != null) 'Authorization': 'Bearer $_token',
+      };
 
   Uri _uri(String path, [Map<String, String>? query]) {
-    final normalized =
-    path.startsWith('/') ? path.substring(1) : path;
+    final normalized = path.startsWith('/') ? path.substring(1) : path;
 
     return Uri.parse('$baseUrl/$normalized').replace(
       queryParameters: query,
@@ -41,16 +40,15 @@ class ApiService {
   }
 
   Future<dynamic> _request(
-      String method,
-      String path, {
-        Object? body,
-        Map<String, String>? query,
-        bool authRequired = false,
-      }) async {
+    String method,
+    String path, {
+    Object? body,
+    Map<String, String>? query,
+    bool authRequired = false,
+  }) async {
     final uri = _uri(path, query);
 
-    final request = http.Request(method, uri)
-      ..headers.addAll(_headers);
+    final request = http.Request(method, uri)..headers.addAll(_headers);
 
     if (body != null) {
       request.body = jsonEncode(body);
@@ -71,19 +69,17 @@ class ApiService {
         final imageBase64 = safeBody['imageBase64'];
 
         safeBody['imageBase64'] =
-        '[base64 omitted: ${imageBase64 is String ? imageBase64.length : 0} chars]';
+            '[base64 omitted: ${imageBase64 is String ? imageBase64.length : 0} chars]';
       }
 
       debugPrint('NOVAKRISHI API BODY: $safeBody');
     }
 
     try {
-      final streamed = await request
-          .send()
-          .timeout(const Duration(seconds: 30));
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
 
-      final response =
-      await http.Response.fromStream(streamed);
+      final response = await http.Response.fromStream(streamed);
 
       debugPrint(
         'NOVAKRISHI API STATUS: ${response.statusCode}',
@@ -93,7 +89,7 @@ class ApiService {
       if (response.body.length > 5000) {
         debugPrint(
           'NOVAKRISHI API RESPONSE: '
-              '${response.body.substring(0, 5000)}... [truncated]',
+          '${response.body.substring(0, 5000)}... [truncated]',
         );
       } else {
         debugPrint(
@@ -113,16 +109,14 @@ class ApiService {
         };
       }
 
-      if (response.statusCode < 200 ||
-          response.statusCode >= 300) {
-        final message =
-        decoded is Map && decoded['message'] != null
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final message = decoded is Map && decoded['message'] != null
             ? decoded['message'].toString()
             : 'Request failed (${response.statusCode})';
 
         debugPrint(
           'NOVAKRISHI API ERROR: '
-              'HTTP ${response.statusCode}: $message',
+          'HTTP ${response.statusCode}: $message',
         );
 
         throw ApiException(
@@ -134,7 +128,7 @@ class ApiService {
       if (authRequired && _token == null) {
         debugPrint(
           'NOVAKRISHI API ERROR: Authentication required '
-              'but no token is available.',
+          'but no token is available.',
         );
 
         throw const ApiException(
@@ -193,8 +187,7 @@ class ApiService {
         'health',
       );
 
-      return data is Map &&
-          data['status'] == 'online';
+      return data is Map && data['status'] == 'online';
     } catch (error) {
       debugPrint(
         'NOVAKRISHI HEALTH ERROR: $error',
@@ -209,8 +202,7 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<void> sendOtp(String mobile) async {
-    final value =
-    mobile.replaceAll(RegExp(r'\D'), '');
+    final value = mobile.replaceAll(RegExp(r'\D'), '');
 
     if (!RegExp(r'^\d{10}$').hasMatch(value)) {
       throw const ApiException(
@@ -232,11 +224,10 @@ class ApiService {
   /// stores the returned JWT,
   /// and returns the user response.
   Future<Map<String, dynamic>> verifyOtp(
-      String mobile,
-      String otp,
-      ) async {
-    final value =
-    mobile.replaceAll(RegExp(r'\D'), '');
+    String mobile,
+    String otp,
+  ) async {
+    final value = mobile.replaceAll(RegExp(r'\D'), '');
 
     if (!RegExp(r'^\d{10}$').hasMatch(value)) {
       throw const ApiException(
@@ -261,9 +252,7 @@ class ApiService {
       },
     );
 
-    if (data is! Map ||
-        data['success'] != true ||
-        data['token'] == null) {
+    if (data is! Map || data['success'] != true || data['token'] == null) {
       throw const ApiException(
         'OTP verification failed.',
         400,
@@ -282,8 +271,8 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>> googleSignIn(
-      String idToken,
-      ) async {
+    String idToken,
+  ) async {
     if (idToken.trim().isEmpty) {
       throw const ApiException(
         'Google authentication token is missing.',
@@ -299,8 +288,7 @@ class ApiService {
       },
     );
 
-    if (data is! Map ||
-        data['token'] == null) {
+    if (data is! Map || data['token'] == null) {
       throw const ApiException(
         'Google sign-in failed.',
         401,
@@ -360,20 +348,13 @@ class ApiService {
       'GET',
       'products',
       query: {
-        if (search != null &&
-            search.isNotEmpty)
-          'search': search,
-        if (category != null &&
-            category.isNotEmpty)
-          'category': category,
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (category != null && category.isNotEmpty) 'category': category,
         'limit': '$limit',
       },
     );
 
-    final list =
-    data is Map
-        ? data['products']
-        : data;
+    final list = data is Map ? data['products'] : data;
 
     if (list is! List) {
       return [];
@@ -383,10 +364,9 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
-
 
   Future<List<Map<String, dynamic>>> getMyProducts() async {
     final data = await _request(
@@ -395,10 +375,7 @@ class ApiService {
       authRequired: true,
     );
 
-    final list =
-        data is Map
-            ? data['products']
-            : data;
+    final list = data is Map ? data['products'] : data;
 
     if (list is! List) {
       return [];
@@ -424,22 +401,13 @@ class ApiService {
       'GET',
       'market-rates',
       query: {
-        if (state != null &&
-            state.isNotEmpty)
-          'state': state,
-        if (district != null &&
-            district.isNotEmpty)
-          'district': district,
+        if (state != null && state.isNotEmpty) 'state': state,
+        if (district != null && district.isNotEmpty) 'district': district,
       },
     );
 
     final list = data is Map
-        ? (
-        data['data'] ??
-            data['records'] ??
-            data['rates'] ??
-            []
-    )
+        ? (data['data'] ?? data['records'] ?? data['rates'] ?? [])
         : data;
 
     if (list is! List) {
@@ -450,7 +418,7 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
@@ -482,22 +450,13 @@ class ApiService {
       'GET',
       'alerts',
       query: {
-        if (state != null &&
-            state.isNotEmpty)
-          'state': state,
-        if (district != null &&
-            district.isNotEmpty)
-          'district': district,
-        if (crop != null &&
-            crop.isNotEmpty)
-          'crop': crop,
+        if (state != null && state.isNotEmpty) 'state': state,
+        if (district != null && district.isNotEmpty) 'district': district,
+        if (crop != null && crop.isNotEmpty) 'crop': crop,
       },
     );
 
-    final list =
-    data is Map
-        ? data['alerts']
-        : data;
+    final list = data is Map ? data['alerts'] : data;
 
     if (list is! List) {
       return [];
@@ -507,7 +466,7 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
@@ -522,13 +481,7 @@ class ApiService {
       authRequired: true,
     );
 
-    final list = data is Map
-        ? (
-        data['orders'] ??
-            data['data'] ??
-            []
-    )
-        : data;
+    final list = data is Map ? (data['orders'] ?? data['data'] ?? []) : data;
 
     if (list is! List) {
       return [];
@@ -538,7 +491,7 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
@@ -547,13 +500,11 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>?> analyzeCropPhoto(
-      File image,
-      ) async {
-    final bytes =
-    await image.readAsBytes();
+    File image,
+  ) async {
+    final bytes = await image.readAsBytes();
 
-    final encoded =
-    base64Encode(bytes);
+    final encoded = base64Encode(bytes);
 
     final data = await _request(
       'POST',
@@ -561,14 +512,11 @@ class ApiService {
       authRequired: true,
       body: {
         'imageBase64': encoded,
-        'filename':
-        image.path.split('/').last,
+        'filename': image.path.split('/').last,
       },
     );
 
-    return data is Map
-        ? Map<String, dynamic>.from(data)
-        : null;
+    return data is Map ? Map<String, dynamic>.from(data) : null;
   }
 
   // ------------------------------------------------------------
@@ -583,12 +531,7 @@ class ApiService {
     );
 
     final list = data is Map
-        ? (
-        data['items'] ??
-            data['cart'] ??
-            data['data'] ??
-            []
-    )
+        ? (data['items'] ?? data['cart'] ?? data['data'] ?? [])
         : data;
 
     if (list is! List) {
@@ -599,7 +542,7 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
@@ -623,8 +566,8 @@ class ApiService {
   }
 
   Future<void> removeFromCart(
-      String productId,
-      ) async {
+    String productId,
+  ) async {
     await _request(
       'DELETE',
       'cart/$productId',
@@ -646,8 +589,7 @@ class ApiService {
       authRequired: true,
       body: {
         'items': items,
-        'deliveryAddress':
-        deliveryAddress,
+        'deliveryAddress': deliveryAddress,
       },
     );
 
@@ -661,8 +603,8 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>> getOrderTracking(
-      String orderId,
-      ) async {
+    String orderId,
+  ) async {
     final data = await _request(
       'GET',
       'orders/$orderId/tracking',
@@ -687,26 +629,18 @@ class ApiService {
       'GET',
       'ai/demand-forecast',
       query: {
-        if (crop != null &&
-            crop.isNotEmpty)
-          'crop': crop,
-        if (state != null &&
-            state.isNotEmpty)
-          'state': state,
-        if (district != null &&
-            district.isNotEmpty)
-          'district': district,
+        if (crop != null && crop.isNotEmpty) 'crop': crop,
+        if (state != null && state.isNotEmpty) 'state': state,
+        if (district != null && district.isNotEmpty) 'district': district,
       },
     );
 
     final list = data is Map
-        ? (
-        data['forecasts'] ??
+        ? (data['forecasts'] ??
             data['forecast'] ??
             data['data'] ??
             data['predictions'] ??
-            []
-    )
+            [])
         : data;
 
     if (list is! List) {
@@ -717,7 +651,7 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
@@ -726,8 +660,8 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>> optimizeRoute(
-      Map<String, dynamic> payload,
-      ) async {
+    Map<String, dynamic> payload,
+  ) async {
     final data = await _request(
       'POST',
       'ai/optimize-route',
@@ -751,13 +685,7 @@ class ApiService {
       authRequired: true,
     );
 
-    final list = data is Map
-        ? (
-        data['scans'] ??
-            data['data'] ??
-            []
-    )
-        : data;
+    final list = data is Map ? (data['scans'] ?? data['data'] ?? []) : data;
 
     if (list is! List) {
       return [];
@@ -767,13 +695,13 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
   }
 
   Future<Map<String, dynamic>> saveScan(
-      Map<String, dynamic> payload,
-      ) async {
+    Map<String, dynamic> payload,
+  ) async {
     final data = await _request(
       'POST',
       'scans',
@@ -797,13 +725,8 @@ class ApiService {
       authRequired: true,
     );
 
-    final list = data is Map
-        ? (
-        data['bulkRequests'] ??
-            data['data'] ??
-            []
-    )
-        : data;
+    final list =
+        data is Map ? (data['bulkRequests'] ?? data['data'] ?? []) : data;
 
     if (list is! List) {
       return [];
@@ -813,8 +736,79 @@ class ApiService {
         .whereType<Map>()
         .map(
           (e) => Map<String, dynamic>.from(e),
-    )
+        )
         .toList();
+  }
+
+  Future<Map<String, dynamic>> createBulkRequest({
+    required String productTitle,
+    String category = 'Vegetables',
+    required double targetQuantity,
+    String unit = 'kg',
+    required String deliveryCity,
+    String deliveryState = '',
+    required String requiredByDate,
+    double? targetPricePerUnit,
+  }) async {
+    if (productTitle.trim().isEmpty) {
+      throw Exception('Crop name is required');
+    }
+
+    if (targetQuantity <= 0) {
+      throw Exception('Required quantity must be greater than 0');
+    }
+
+    if (deliveryCity.trim().isEmpty) {
+      throw Exception('Delivery city is required');
+    }
+
+    final response = await _request(
+      'POST',
+      'bulk-requests',
+      body: {
+        'productTitle': productTitle.trim(),
+        'category': category.trim().isEmpty ? 'Vegetables' : category.trim(),
+        'targetQuantity': targetQuantity,
+        'unit': unit.trim().isEmpty ? 'kg' : unit.trim(),
+        'deliveryCity': deliveryCity.trim(),
+        'deliveryState': deliveryState.trim(),
+        'requiredByDate': requiredByDate,
+        if (targetPricePerUnit != null && targetPricePerUnit > 0)
+          'targetPricePerUnit': targetPricePerUnit,
+      },
+      authRequired: true,
+    );
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    throw Exception('Invalid bulk request response');
+  }
+
+  Future<Map<String, dynamic>> acceptFarmerOffer({
+    required String requestId,
+    required String offerId,
+  }) async {
+    if (requestId.trim().isEmpty) {
+      throw Exception('Invalid buyer request');
+    }
+
+    if (offerId.trim().isEmpty) {
+      throw Exception('Invalid farmer offer');
+    }
+
+    final response = await _request(
+      'POST',
+      'bulk-requests/$requestId/offers/$offerId/accept',
+      authRequired: true,
+    );
+
+    if (response is Map) {
+      return Map<String, dynamic>.from(response);
+    }
+
+    throw Exception('Invalid accept offer response');
   }
 
   // ------------------------------------------------------------
@@ -850,12 +844,9 @@ class ApiService {
       'POST',
       'bulk-requests/$requestId/offers',
       body: {
-        'offeredQuantity':
-        offeredQuantity,
-        'offeredPricePerUnit':
-        offeredPricePerUnit,
-        'logisticsIncluded':
-        logisticsIncluded,
+        'offeredQuantity': offeredQuantity,
+        'offeredPricePerUnit': offeredPricePerUnit,
+        'logisticsIncluded': logisticsIncluded,
         'notes': notes.trim(),
       },
       authRequired: true,
@@ -873,27 +864,22 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<String> uploadProductImage(
-      File imageFile,
-      ) async {
-    final bytes =
-    await imageFile.readAsBytes();
+    File imageFile,
+  ) async {
+    final bytes = await imageFile.readAsBytes();
 
     debugPrint(
       'NOVAKRISHI IMAGE BYTES: ${bytes.length}',
     );
 
-    final base64Image =
-    base64Encode(bytes);
+    final base64Image = base64Encode(bytes);
 
     debugPrint(
       'NOVAKRISHI IMAGE BASE64 CHARS: '
-          '${base64Image.length}',
+      '${base64Image.length}',
     );
 
-    final extension = imageFile.path
-        .split('.')
-        .last
-        .toLowerCase();
+    final extension = imageFile.path.split('.').last.toLowerCase();
 
     final contentType = switch (extension) {
       'png' => 'image/png',
@@ -912,8 +898,7 @@ class ApiService {
       body: {
         'imageBase64': base64Image,
         'contentType': contentType,
-        'fileName':
-        imageFile.path.split('/').last,
+        'fileName': imageFile.path.split('/').last,
       },
       authRequired: true,
     );
@@ -925,11 +910,9 @@ class ApiService {
       );
     }
 
-    final imageUrl =
-    response['imageUrl']?.toString();
+    final imageUrl = response['imageUrl']?.toString();
 
-    if (imageUrl == null ||
-        imageUrl.isEmpty) {
+    if (imageUrl == null || imageUrl.isEmpty) {
       throw const ApiException(
         'Product image upload failed.',
         500,
@@ -940,25 +923,22 @@ class ApiService {
       'NOVAKRISHI IMAGE URL: $imageUrl',
     );
 
-    if (imageUrl.startsWith('http://') ||
-        imageUrl.startsWith('https://')) {
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
 
-    final serverBaseUrl =
-    baseUrl.endsWith('/api')
+    final serverBaseUrl = baseUrl.endsWith('/api')
         ? baseUrl.substring(
-      0,
-      baseUrl.length - 4,
-    )
+            0,
+            baseUrl.length - 4,
+          )
         : baseUrl;
 
-    final fullImageUrl =
-        '$serverBaseUrl$imageUrl';
+    final fullImageUrl = '$serverBaseUrl$imageUrl';
 
     debugPrint(
       'NOVAKRISHI FULL IMAGE URL: '
-          '$fullImageUrl',
+      '$fullImageUrl',
     );
 
     return fullImageUrl;
@@ -969,8 +949,8 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>> createProduct(
-      Map<String, dynamic> payload,
-      ) async {
+    Map<String, dynamic> payload,
+  ) async {
     debugPrint(
       'NOVAKRISHI CREATE PRODUCT START',
     );
@@ -996,9 +976,9 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<Map<String, dynamic>> updateProduct(
-      String id,
-      Map<String, dynamic> payload,
-      ) async {
+    String id,
+    Map<String, dynamic> payload,
+  ) async {
     final data = await _request(
       'PUT',
       'products/$id',
@@ -1016,8 +996,8 @@ class ApiService {
   // ------------------------------------------------------------
 
   Future<void> deleteProduct(
-      String id,
-      ) async {
+    String id,
+  ) async {
     await _request(
       'DELETE',
       'products/$id',
@@ -1035,9 +1015,9 @@ class ApiException implements Exception {
   final int statusCode;
 
   const ApiException(
-      this.message,
-      this.statusCode,
-      );
+    this.message,
+    this.statusCode,
+  );
 
   @override
   String toString() {
