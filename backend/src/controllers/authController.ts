@@ -79,11 +79,22 @@ export const authController = {
         return res.status(400).json(result);
       }
       return res.status(201).json(result);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during registration:', error);
+
+      if (error?.code === 11000) {
+        const duplicateFields = Object.keys(error?.keyPattern || {});
+        const field = duplicateFields[0] || 'email/mobile number';
+
+        return res.status(409).json({
+          success: false,
+          message: `An account with this ${field} already exists.`
+        });
+      }
+
       return res.status(500).json({
         success: false,
-        message: 'An unexpected server error occurred during registration.'
+        message: error?.message || 'Unable to register your account. Please try again.'
       });
     }
   },
