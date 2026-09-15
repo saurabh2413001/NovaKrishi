@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/india_locations.dart';
 import '../../services/localization.dart';
 import '../../services/api_service.dart';
 import '../../services/app_state.dart';
@@ -13,7 +14,8 @@ class FarmerRegistrationScreen extends StatefulWidget {
   FarmerRegistrationScreen({super.key});
 
   @override
-  State<FarmerRegistrationScreen> createState() => _FarmerRegistrationScreenState();
+  State<FarmerRegistrationScreen> createState() =>
+      _FarmerRegistrationScreenState();
 }
 
 class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
@@ -35,10 +37,24 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
   bool _fpoMember = true;
   bool _agreedToTerms = false;
 
-  final List<String> _crops = ['Tomatoes', AppStrings.t('Onions', 'प्याज़'), AppStrings.t('Grapes', 'अंगूर')];
-  static const List<String> _allFarmSizes = ['1-2 Acres', '2-5 Acres', '5-10 Acres', '10+ Acres'];
-  static final _states = [AppStrings.t('Maharashtra', 'महाराष्ट्र'), AppStrings.t('Uttar Pradesh', 'उत्तर प्रदेश'), AppStrings.t('Punjab', 'पंजाब'), AppStrings.t('Haryana', 'हरियाणा'), AppStrings.t('Madhya Pradesh', 'मध्य प्रदेश')];
-  static final _districts = [AppStrings.t('Nashik', 'नासिक'), AppStrings.t('Pune', 'पुणे'), AppStrings.t('Nagpur', 'नागपुर'), AppStrings.t('Aurangabad', 'औरंगाबाद')];
+  final List<String> _crops = [
+    'Tomatoes',
+    AppStrings.t('Onions', 'प्याज़'),
+    AppStrings.t('Grapes', 'अंगूर')
+  ];
+  static const List<String> _allFarmSizes = [
+    '1-2 Acres',
+    '2-5 Acres',
+    '5-10 Acres',
+    '10+ Acres'
+  ];
+  static final _states = indiaStatesAndUnionTerritories;
+  List<String> get _districts {
+    if (_state == null || _state!.trim().isEmpty) {
+      return const [];
+    }
+    return indiaDistrictsByState[_state!] ?? const [];
+  }
 
   @override
   void dispose() {
@@ -57,18 +73,19 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
     if (_isCreatingAccount) return;
 
     final name = _nameCtrl.text.trim();
-    final mobile = _mobileCtrl.text.trim();
+    final mobile = _mobileCtrl.text.replaceAll(RegExp(r'\D'), '');
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
     final confirmPassword = _confirmPasswordCtrl.text;
     final pincode = _pincodeCtrl.text.trim();
 
     if (name.isEmpty) {
-      _showMessage(AppStrings.t('Enter your full name.', 'अपना पूरा नाम दर्ज करें।'));
+      _showMessage(
+          AppStrings.t('Enter your full name.', 'अपना पूरा नाम दर्ज करें।'));
       return;
     }
 
-    if (!RegExp(r'^\\d{10}$').hasMatch(mobile)) {
+    if (!RegExp(r'^\d{10}$').hasMatch(mobile)) {
       _showMessage(AppStrings.t(
         'Mobile number must be exactly 10 digits.',
         'मोबाइल नंबर ठीक 10 अंकों का होना चाहिए।',
@@ -77,7 +94,7 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
     }
 
     if (email.isNotEmpty &&
-        !RegExp(r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$').hasMatch(email)) {
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
       _showMessage(AppStrings.t(
         'Enter a valid email address.',
         'सही ईमेल पता दर्ज करें।',
@@ -95,7 +112,7 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
 
     if (!RegExp(r'[A-Z]').hasMatch(password) ||
         !RegExp(r'[a-z]').hasMatch(password) ||
-        !RegExp(r'\\d').hasMatch(password)) {
+        !RegExp(r'\d').hasMatch(password)) {
       _showMessage(AppStrings.t(
         'Password must contain uppercase, lowercase and a number.',
         'पासवर्ड में बड़े अक्षर, छोटे अक्षर और एक संख्या होनी चाहिए।',
@@ -119,7 +136,7 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
       return;
     }
 
-    if (!RegExp(r'^\\d{6}$').hasMatch(pincode)) {
+    if (!RegExp(r'^\d{6}$').hasMatch(pincode)) {
       _showMessage(AppStrings.t(
         'Pincode must be exactly 6 digits.',
         'पिनकोड ठीक 6 अंकों का होना चाहिए।',
@@ -195,10 +212,16 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppStrings.t('Add crop', 'फसल जोड़ें')),
-        content: TextField(controller: controller, decoration: InputDecoration(hintText: 'e.g. Soybean')),
+        content: TextField(
+            controller: controller,
+            decoration: InputDecoration(hintText: 'e.g. Soybean')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppStrings.t('Cancel', 'रद्द करें'))),
-          TextButton(onPressed: () => Navigator.pop(context, controller.text), child: Text(AppStrings.t('Add', 'जोड़ें'))),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppStrings.t('Cancel', 'रद्द करें'))),
+          TextButton(
+              onPressed: () => Navigator.pop(context, controller.text),
+              child: Text(AppStrings.t('Add', 'जोड़ें'))),
         ],
       ),
     );
@@ -215,52 +238,84 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
         child: ListView(
           padding: EdgeInsets.fromLTRB(20, 8, 20, 24),
           children: [
-            Pill(text: AppStrings.t('Farmer & FPO Onboarding', 'किसान और FPO पंजीकरण'), icon: Icons.agriculture_outlined),
+            Pill(
+                text: AppStrings.t(
+                    'Farmer & FPO Onboarding', 'किसान और FPO पंजीकरण'),
+                icon: Icons.agriculture_outlined),
             SizedBox(height: 14),
-            Text(AppStrings.t('Register as Farmer', 'किसान के रूप में पंजीकरण करें'), style: Theme.of(context).textTheme.displaySmall),
+            Text(
+                AppStrings.t(
+                    'Register as Farmer', 'किसान के रूप में पंजीकरण करें'),
+                style: Theme.of(context).textTheme.displaySmall),
             SizedBox(height: 6),
             Text(
-              AppStrings.t('Connect directly with buyers and get transparent prices for your harvest.', 'खरीदारों से सीधे जुड़ें और अपनी उपज के लिए पारदर्शी मूल्य पाएँ।'),
+              AppStrings.t(
+                  'Connect directly with buyers and get transparent prices for your harvest.',
+                  'खरीदारों से सीधे जुड़ें और अपनी उपज के लिए पारदर्शी मूल्य पाएँ।'),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             SizedBox(height: 12),
-            ProgressHeader(eyebrow: AppStrings.t('Farm & crop profiling', 'खेत और फसल प्रोफ़ाइल'), step: AppStrings.t('STEP 2 OF 2', 'चरण 2 / 2'), progress: 1),
+            ProgressHeader(
+                eyebrow: AppStrings.t(
+                    'Farm & crop profiling', 'खेत और फसल प्रोफ़ाइल'),
+                step: AppStrings.t('STEP 2 OF 2', 'चरण 2 / 2'),
+                progress: 1),
             SizedBox(height: 14),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: appCardDecoration(color: AppColors.mintTint, borderColor: AppColors.mintTintStrong),
+              decoration: appCardDecoration(
+                  color: AppColors.mintTint,
+                  borderColor: AppColors.mintTintStrong),
               child: Row(
                 children: [
-                  Icon(Icons.savings_outlined, color: AppColors.primary, size: 18),
+                  Icon(Icons.savings_outlined,
+                      color: AppColors.primary, size: 18),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      AppStrings.t('Kisan Direct Settlement — Guaranteed 48-hr mandi-linked escrow clearance', 'किसान डायरेक्ट सेटलमेंट — मंडी से जुड़े एस्क्रो का 48 घंटे में सुनिश्चित निपटान'),
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                      AppStrings.t(
+                          'Kisan Direct Settlement — Guaranteed 48-hr mandi-linked escrow clearance',
+                          'किसान डायरेक्ट सेटलमेंट — मंडी से जुड़े एस्क्रो का 48 घंटे में सुनिश्चित निपटान'),
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark),
                     ),
                   ),
                 ],
               ),
             ),
             SizedBox(height: 6),
-            FormSectionLabel(number: 1, title: AppStrings.t('Personal Information', 'व्यक्तिगत जानकारी')),
-            FieldLabel(AppStrings.t('Full Name (as on Aadhaar / Bank A/c)', 'पूरा नाम (आधार / बैंक खाते के अनुसार)')),
+            FormSectionLabel(
+                number: 1,
+                title:
+                    AppStrings.t('Personal Information', 'व्यक्तिगत जानकारी')),
+            FieldLabel(AppStrings.t('Full Name (as on Aadhaar / Bank A/c)',
+                'पूरा नाम (आधार / बैंक खाते के अनुसार)')),
             TextField(controller: _nameCtrl),
             FieldLabel(AppStrings.t('Mobile Number', 'मोबाइल नंबर')),
             TextField(
               controller: _mobileCtrl,
               keyboardType: TextInputType.phone,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10)
+              ],
               decoration: InputDecoration(
                 prefixIcon: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                  child: Text('🇮🇳 +91', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                  child: Text('🇮🇳 +91',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 13.5)),
                 ),
-                prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-                suffixIcon: Icon(Icons.verified, color: AppColors.success, size: 18),
+                prefixIconConstraints:
+                    BoxConstraints(minWidth: 0, minHeight: 0),
+                suffixIcon:
+                    Icon(Icons.verified, color: AppColors.success, size: 18),
               ),
             ),
-            FieldLabel(AppStrings.t('Email Address (Optional)', 'ईमेल पता (वैकल्पिक)')),
+            FieldLabel(AppStrings.t(
+                'Email Address (Optional)', 'ईमेल पता (वैकल्पिक)')),
             TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
@@ -280,7 +335,8 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                 ),
               ),
             ),
-            FieldLabel(AppStrings.t('Confirm Password', 'पासवर्ड की पुष्टि करें')),
+            FieldLabel(
+                AppStrings.t('Confirm Password', 'पासवर्ड की पुष्टि करें')),
             TextField(
               controller: _confirmPasswordCtrl,
               obscureText: true,
@@ -289,11 +345,24 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
               ),
             ),
             SizedBox(height: 6),
-            FormSectionLabel(number: 2, title: AppStrings.t('Farm Location', 'खेत का स्थान')),
+            FormSectionLabel(
+                number: 2,
+                title: AppStrings.t('Farm Location', 'खेत का स्थान')),
             FieldLabel('State'),
-            _Dropdown(value: _state, items: _states, onChanged: (v) => setState(() => _state = v)),
+            _Dropdown(
+              value: _state,
+              items: _states,
+              onChanged: (v) => setState(() {
+                _state = v;
+                _district = null;
+              }),
+            ),
             FieldLabel(AppStrings.t('District', 'ज़िला')),
-            _Dropdown(value: _district, items: _districts, onChanged: (v) => setState(() => _district = v)),
+            _Dropdown(
+              value: _district,
+              items: _districts,
+              onChanged: (v) => setState(() => _district = v),
+            ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -312,7 +381,13 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       FieldLabel(AppStrings.t('Pincode', 'पिनकोड')),
-                      TextField(controller: _pincodeCtrl, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(6)]),
+                      TextField(
+                          controller: _pincodeCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(6)
+                          ]),
                     ],
                   ),
                 ),
@@ -321,7 +396,9 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
             SizedBox(height: 10),
             _MapPreview(),
             SizedBox(height: 6),
-            FormSectionLabel(number: 3, title: AppStrings.t('Farm & Crop Details', 'खेत और फसल विवरण')),
+            FormSectionLabel(
+                number: 3,
+                title: AppStrings.t('Farm & Crop Details', 'खेत और फसल विवरण')),
             FieldLabel(AppStrings.t('Farm Size (Acres)', 'खेत का आकार (एकड़)')),
             Wrap(
               spacing: 8,
@@ -333,19 +410,25 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                     selected: _farmSize == size,
                     onSelected: (_) => setState(() => _farmSize = size),
                     labelStyle: TextStyle(
-                      color: _farmSize == size ? Colors.white : AppColors.textSecondary,
+                      color: _farmSize == size
+                          ? Colors.white
+                          : AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
                   ),
               ],
             ),
-            FieldLabel(AppStrings.t('Primary Produce (Multi-select)', 'मुख्य उपज (एक से अधिक चुनें)')),
+            FieldLabel(AppStrings.t('Primary Produce (Multi-select)',
+                'मुख्य उपज (एक से अधिक चुनें)')),
             Row(
               children: [
                 Text(
                   '${_crops.length} Selected',
-                  style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -359,7 +442,10 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                     label: Text(crop),
                     onDeleted: () => setState(() => _crops.remove(crop)),
                     backgroundColor: AppColors.mintTint,
-                    labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryDark),
+                    labelStyle: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryDark),
                     deleteIconColor: AppColors.primaryDark,
                     side: BorderSide.none,
                   ),
@@ -367,7 +453,8 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                   label: Text('+ Add Crop'),
                   onPressed: _addCrop,
                   backgroundColor: AppColors.chipUnselected,
-                  labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  labelStyle:
+                      TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                   side: BorderSide.none,
                 ),
               ],
@@ -436,10 +523,13 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
               ),
             ),
             if (_fpoMember) ...[
-              FieldLabel(AppStrings.t('Affiliated FPO / Cooperative Society Name', 'संबद्ध FPO / सहकारी समिति का नाम')),
+              FieldLabel(AppStrings.t(
+                  'Affiliated FPO / Cooperative Society Name',
+                  'संबद्ध FPO / सहकारी समिति का नाम')),
               TextField(
                 controller: _fpoCtrl,
-                decoration: InputDecoration(prefixIcon: Icon(Icons.groups_outlined, size: 20)),
+                decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.groups_outlined, size: 20)),
               ),
             ],
             SizedBox(height: 16),
@@ -451,7 +541,8 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                   height: 22,
                   child: Checkbox(
                     value: _agreedToTerms,
-                    onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+                    onChanged: (v) =>
+                        setState(() => _agreedToTerms = v ?? false),
                     activeColor: AppColors.primary,
                   ),
                 ),
@@ -459,14 +550,22 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                 Expanded(
                   child: RichText(
                     text: TextSpan(
-                      style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+                      style: TextStyle(
+                          fontSize: 11.5, color: AppColors.textSecondary),
                       children: [
-                        TextSpan(text: AppStrings.t('I agree to ', 'मैं सहमत हूँ ')),
                         TextSpan(
-                          text: "NovaKrishi's Fair Trade Terms & Escrow Policy. ",
-                          style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+                            text: AppStrings.t('I agree to ', 'मैं सहमत हूँ ')),
+                        TextSpan(
+                          text:
+                              "NovaKrishi's Fair Trade Terms & Escrow Policy. ",
+                          style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w700),
                         ),
-                        TextSpan(text: AppStrings.t('I confirm the agricultural declarations provided are authentic.', 'मैं पुष्टि करता/करती हूँ कि दी गई कृषि घोषणाएँ सही हैं।')),
+                        TextSpan(
+                            text: AppStrings.t(
+                                'I confirm the agricultural declarations provided are authentic.',
+                                'मैं पुष्टि करता/करती हूँ कि दी गई कृषि घोषणाएँ सही हैं।')),
                       ],
                     ),
                   ),
@@ -489,9 +588,11 @@ class _FarmerRegistrationScreenState extends State<FarmerRegistrationScreen> {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text(AppStrings.t('Creating Account...', 'खाता बनाया जा रहा है...')),
+                    Text(AppStrings.t(
+                        'Creating Account...', 'खाता बनाया जा रहा है...')),
                   ] else ...[
-                    Text(AppStrings.t('Create Farmer Account', 'किसान खाता बनाएँ')),
+                    Text(AppStrings.t(
+                        'Create Farmer Account', 'किसान खाता बनाएँ')),
                     SizedBox(width: 8),
                     Icon(Icons.arrow_forward, size: 18),
                   ],
@@ -551,14 +652,16 @@ class _Dropdown extends StatelessWidget {
   final String? value;
   final List<String> items;
   final ValueChanged<String?> onChanged;
-  _Dropdown({required this.value, required this.items, required this.onChanged});
+  _Dropdown(
+      {required this.value, required this.items, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       value: value,
       items: [
-        for (final item in items) DropdownMenuItem(value: item, child: Text(item)),
+        for (final item in items)
+          DropdownMenuItem(value: item, child: Text(item)),
       ],
       onChanged: onChanged,
       icon: Icon(Icons.keyboard_arrow_down, size: 20),
@@ -595,7 +698,10 @@ class _MapPreview extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(AppRadii.pill),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 4)],
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.08), blurRadius: 4)
+                ],
               ),
               child: Text(
                 '📍 Dindori Mandi Hub (6.2 km)',
