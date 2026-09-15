@@ -4,19 +4,25 @@ import { User, IUser, RegisterDTO, UserResponse, ReliabilityMetrics } from '../m
 export const userService = {
   async createUser(dto: RegisterDTO): Promise<UserResponse> {
     try {
-      const existingUser = await User.findOne({ emailOrPhone: dto.emailOrPhone.toLowerCase() });
+      const contact = (dto.emailOrPhone || dto.email || dto.phone || '').trim();
+
+      if (!contact) {
+        throw new Error('Email or phone is required.');
+      }
+
+      const existingUser = await User.findOne({ emailOrPhone: contact.toLowerCase() });
       if (existingUser) {
         throw new Error('User with this email or phone already exists.');
       }
 
-      const emailVal = dto.email || (dto.emailOrPhone.includes('@') ? dto.emailOrPhone : '');
-      const phoneVal = dto.phone || (!dto.emailOrPhone.includes('@') ? dto.emailOrPhone : '');
+      const emailVal = dto.email || (contact.includes('@') ? contact : '');
+      const phoneVal = dto.phone || (!contact.includes('@') ? contact : '');
 
       const newUser = new User({
         name: dto.name,
         email: emailVal,
         phone: phoneVal,
-        emailOrPhone: dto.emailOrPhone.toLowerCase(),
+        emailOrPhone: contact.toLowerCase(),
         passwordHash: dto.password ? dto.password : undefined,
         role: dto.role,
         verificationStatus: dto.verificationStatus || (dto.role === 'farmer' ? 'PENDING' : 'VERIFIED'),
